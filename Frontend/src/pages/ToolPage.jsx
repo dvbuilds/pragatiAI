@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import axios from "axios";
+import api from "../api";
 import TabBar, { TABS } from "../components/TabBar";
 import QueryForm from "../components/QueryForm";
 import ResultView from "../components/ResultView";
 import ComplaintTracker from "../components/ComplaintTracker";
 import EmergencyContacts from "../components/EmergencyContacts";
 import NearbyOffices from "../components/NearbyOffices";
-
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+import { useTheme } from "../components/ThemeContext";
 
 export default function ToolPage() {
+  const { dark, toggle } = useTheme();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") || "assistant";
   const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : "assistant");
@@ -35,7 +35,7 @@ export default function ToolPage() {
     setResult(null);
     const query = tab === "scheme" ? profile : input;
     try {
-      const res = await axios.post(`${API_BASE}/api/ask`, { mode: tab, query, language });
+      const res = await api.post(`/api/ask`, { mode: tab, query, language });
       setResult(res.data);
 
       if (tab === "complaint") {
@@ -51,12 +51,20 @@ export default function ToolPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6">
+    <div className={`min-h-screen p-6 ${dark ? "bg-slate-950 text-white" : "bg-gray-50 text-slate-900"}`}>
       <div className="flex items-center justify-between mb-1">
         <h1 className="text-3xl font-bold">CivicAI</h1>
-        <Link to="/" className="text-sm text-slate-400 hover:text-white">← Home</Link>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggle}
+            className={`text-sm px-3 py-1 rounded-lg ${dark ? "bg-slate-800" : "bg-gray-200"}`}
+          >
+            {dark ? "☀️ Light" : "🌙 Dark"}
+          </button>
+          <Link to="/" className={`text-sm ${dark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"}`}>← Home</Link>
+        </div>
       </div>
-      <p className="text-slate-400 mb-6">Your AI Government Assistant</p>
+      <p className={`mb-6 ${dark ? "text-slate-400" : "text-slate-500"}`}>Your AI Government Assistant</p>
 
       <TabBar tab={tab} setTab={setTab} language={language} setLanguage={setLanguage} resetForm={resetForm} />
       <QueryForm
@@ -70,7 +78,7 @@ export default function ToolPage() {
         loading={loading}
       />
       <ResultView result={result} />
-      {tab === "complaint" && <ComplaintTracker complaints={complaints} />}
+      {tab === "complaint" && <ComplaintTracker complaints={complaints} setComplaints={setComplaints} />}
       <NearbyOffices />
       <EmergencyContacts />
     </div>
