@@ -26,7 +26,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
       <div className="bg-slate-900 rounded-xl p-8 w-full max-w-sm">
-        <h1 className="text-2xl font-bold mb-1">CivicAI</h1>
+        <h1 className="text-2xl font-bold mb-1">PragatiAI</h1>
         <p className="text-slate-400 text-sm mb-6">{mode === "login" ? "Sign in to continue" : "Create your account"}</p>
 
         <input

@@ -53,7 +53,7 @@ export default function ToolPage() {
   return (
     <div className={`min-h-screen p-6 ${dark ? "bg-slate-950 text-white" : "bg-gray-50 text-slate-900"}`}>
       <div className="flex items-center justify-between mb-1">
-        <h1 className="text-3xl font-bold">CivicAI</h1>
+        <h1 className="text-3xl font-bold">PragatiAI</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={toggle}

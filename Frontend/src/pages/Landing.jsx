@@ -32,7 +32,7 @@ export default function Landing() {
           Powered by Gemini 2.5 Flash
         </div>
         <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-          CivicAI
+          PragatiAI
         </h1>
         <p className="text-xl text-slate-400 mb-2">Your AI Government Assistant</p>
         <p className="text-slate-500 max-w-xl mx-auto mb-10">
