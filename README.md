@@ -1,4 +1,4 @@
-# 🇮🇳 PragatiAI
+# PragatiAI
 
 > **Your Intelligent Government Companion**
 
