@@ -7,7 +7,25 @@ const aiRoutes = require("./routes/aiRoutes");
 const authRoutes = require("./routes/authRoutes");
 
 const app = express();
-app.use(cors({ origin: process.env.FRONTEND_URL || "http://localhost:5173", credentials: true }));
+const rawOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map((o) => o.trim().replace(/\/$/, ""));
+
+console.log("CORS allowed origins:", rawOrigins);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // same-origin / curl / server-to-server
+      if (rawOrigins.includes(origin.replace(/\/$/, ""))) {
+        return callback(null, true);
+      }
+      console.error("CORS blocked origin:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
