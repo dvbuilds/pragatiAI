@@ -1,0 +1,6 @@
+{
+  "name": "CivicPulse AI",
+  "description": "Modern Civic Services Portal and Interactive Citizen Dashboard powered by AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
