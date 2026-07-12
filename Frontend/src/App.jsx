@@ -1,12 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
 import PublicPortalPage from './pages/PublicPortalPage';
 import AssistantPage from './pages/AssistantPage';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import { useAuth } from './context/AuthContext';
+
+const PROTECTED_TABS = ['dashboard', 'portal', 'assistant'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('landing');
+  const { user, authChecked, logout } = useAuth();
+
+  // Route guard: once we know whether there's a session, bounce
+  // unauthenticated visitors away from protected tabs, and skip signed-in
+  // users past the login/register screens straight to their dashboard.
+  useEffect(() => {
+    if (!authChecked) return;
+    if (!user && PROTECTED_TABS.includes(activeTab)) {
+      setActiveTab('login');
+    }
+    if (user && (activeTab === 'login' || activeTab === 'register')) {
+      setActiveTab('dashboard');
+    }
+  }, [authChecked, user, activeTab]);
+
+  const handleNavigate = (tab) => {
+    if (PROTECTED_TABS.includes(tab) && !user) {
+      setActiveTab('login');
+      return;
+    }
+    setActiveTab(tab);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setActiveTab('landing');
+  };
 
   // Global Active Requests State
   const [requests, setRequests] = useState([
@@ -116,29 +148,43 @@ export default function App() {
           className="w-full min-h-screen"
         >
           {activeTab === 'landing' && (
-            <LandingPage onNavigate={setActiveTab} />
+            <LandingPage onNavigate={handleNavigate} />
           )}
 
-          {activeTab === 'dashboard' && (
+          {activeTab === 'login' && (
+            <Login onNavigate={handleNavigate} />
+          )}
+
+          {activeTab === 'register' && (
+            <Register onNavigate={handleNavigate} />
+          )}
+
+          {activeTab === 'dashboard' && user && (
             <DashboardPage 
-              onNavigate={setActiveTab} 
+              onNavigate={handleNavigate} 
+              onLogout={handleLogout}
+              currentUser={user}
               requests={requests}
               onAddRequest={handleAddRequest}
               onUpdateRequest={handleUpdateRequest}
             />
           )}
 
-          {activeTab === 'portal' && (
+          {activeTab === 'portal' && user && (
             <PublicPortalPage 
-              onNavigate={setActiveTab}
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+              currentUser={user}
               issues={issues}
               onAddIssue={handleAddIssue}
             />
           )}
 
-          {activeTab === 'assistant' && (
+          {activeTab === 'assistant' && user && (
             <AssistantPage 
-              onNavigate={setActiveTab}
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+              currentUser={user}
               onAddRequest={handleAssistantAddRequest}
             />
           )}
