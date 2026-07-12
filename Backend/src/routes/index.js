@@ -7,10 +7,10 @@ import schemeRoutes from './scheme.routes.js';
 
 const router = Router();
 
-router.use('/auth', authRoutes);
-router.use('/issues', issueRoutes);
-router.use('/complaints', complaintRoutes);
-router.use('/documents', documentRoutes);
-router.use('/schemes', schemeRoutes);
+router.use('/api/auth', authRoutes);
+router.use('/api/issues', issueRoutes);
+router.use('/api/complaints', complaintRoutes);
+router.use('/api/documents', documentRoutes);
+router.use('/api/schemes', schemeRoutes);
 
 export default router;

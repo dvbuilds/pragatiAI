@@ -1,14 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, Search, Bell, ChevronRight, Sparkles, ArrowRight, ChevronLeft, Calendar, 
-  MapPin, CheckCircle, AlertCircle, FileText, Settings
+  MapPin, CheckCircle, AlertCircle, FileText, Settings, ExternalLink, Loader2, UserCog
 } from 'lucide-react';
 import IssueWizardModal from '../components/IssueWizardModal';
+import api from '../lib/api';
 
-export default function DashboardPage({ onNavigate, requests, onAddRequest, onUpdateRequest }) {
+export default function DashboardPage({ onNavigate, requests, onAddRequest, onUpdateRequest, currentUser }) {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // AI-matched government scheme recommendations (real backend call, replaces
+  // the old hardcoded "Community Garden" / "E-Waste" cards)
+  const [recommendations, setRecommendations] = useState([]);
+  const [recsLoading, setRecsLoading] = useState(true);
+  const [recsError, setRecsError] = useState('');
+  const profileIncomplete = !currentUser?.profile?.age || !currentUser?.profile?.gender || currentUser?.profile?.annualIncome === undefined;
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRecommendations = async () => {
+      setRecsLoading(true);
+      setRecsError('');
+      try {
+        const { data } = await api.post('/schemes/match', {});
+        if (!cancelled) setRecommendations(data.data.matches || []);
+      } catch (err) {
+        if (!cancelled) setRecsError(err?.response?.data?.message || 'Could not load recommendations right now.');
+      } finally {
+        if (!cancelled) setRecsLoading(false);
+      }
+    };
+    fetchRecommendations();
+    return () => { cancelled = true; };
+  }, [currentUser]);
   
   // Notification States
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -67,25 +93,6 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
     }
   ];
 
-  const handleApplyCommunityPlot = () => {
-    // Check if we already added a Community Garden request
-    if (requests.some(r => r.title.includes("Community Garden"))) {
-      alert("You have already submitted an application for the Community Garden Plot!");
-      return;
-    }
-
-    const newReq = {
-      id: `req-${Date.now()}`,
-      title: "Community Garden Plot Application",
-      status: "In Review",
-      dateSubmitted: "Today",
-      type: "permit",
-      description: "Requested space for agricultural plot in District 4 greenway zone."
-    };
-    onAddRequest(newReq);
-    alert("Application submitted! We have added 'Community Garden Plot Application' to your active requests.");
-  };
-
   const handleFixTaxExemption = () => {
     setExemptionUploading(true);
     setTimeout(() => {
@@ -129,10 +136,10 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
         <div className="flex flex-col gap-6 mb-8 px-4">
           <div className="flex flex-col gap-1.5">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-200 shadow-sm border border-slate-300">
-              <img className="w-full h-full object-cover" src={alexAvatar} alt="Alex Headshot" />
+              <img className="w-full h-full object-cover" src={alexAvatar} alt={currentUser?.fullName || 'Citizen'} />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-slate-900 leading-tight">Alex</h3>
+              <h3 className="font-bold text-sm text-slate-900 leading-tight">{currentUser?.fullName?.split(' ')[0] || 'Citizen'}</h3>
               <p className="text-[10px] font-bold text-teal-700/80 uppercase tracking-wider mt-0.5">Verified Citizen</p>
             </div>
           </div>
@@ -180,7 +187,7 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
           </button>
 
           <button 
-            onClick={() => onNavigate('dashboard')}
+            onClick={() => onNavigate('settings')}
             className="flex items-center gap-3 text-slate-600 px-4 py-3 hover:bg-slate-200/50 rounded-xl transition-all text-left cursor-pointer mt-auto"
           >
             <Settings className="w-4 h-4" />
@@ -343,43 +350,56 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
                   <h2 className="font-bold text-lg text-teal-950">AI Recommendations</h2>
                 </div>
 
-                <div className="space-y-4 relative z-10">
-                  {/* Rec 1 */}
-                  <div className="bg-white p-4 rounded-2xl border border-teal-100/45 shadow-sm">
-                    <span className="px-2 py-0.5 bg-teal-100 text-teal-800 text-[9px] font-bold uppercase rounded-md tracking-wider mb-2.5 inline-block">
-                      New Opening
-                    </span>
-                    <h4 className="font-bold text-sm text-slate-950 mb-1">Community Garden: District 4</h4>
+                {profileIncomplete ? (
+                  <div className="bg-white p-4 rounded-2xl border border-teal-100/45 shadow-sm relative z-10">
                     <p className="text-xs text-slate-500 leading-relaxed mb-3">
-                      Based on your interest in urban sustainability, a new plot is opening 0.4 miles from your home.
+                      Add your age, gender, and income in Settings so CivicPulse AI can match you against real government welfare schemes.
                     </p>
                     <button 
-                      onClick={handleApplyCommunityPlot}
+                      onClick={() => onNavigate('settings')}
                       className="text-teal-600 font-bold text-xs flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
                     >
-                      <span>Apply for a Plot</span> 
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <UserCog className="w-3.5 h-3.5" />
+                      <span>Complete your profile</span>
                     </button>
                   </div>
-
-                  {/* Rec 2 */}
-                  <div className="bg-white p-4 rounded-2xl border border-teal-100/45 shadow-sm">
-                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[9px] font-bold uppercase rounded-md tracking-wider mb-2.5 inline-block">
-                      Service Alert
-                    </span>
-                    <h4 className="font-bold text-sm text-slate-950 mb-1">E-Waste Collection Day</h4>
-                    <p className="text-xs text-slate-500 leading-relaxed mb-3">
-                      Saturday is curbside electronics pickup for your block. Set out items by 7:00 AM.
-                    </p>
-                    <button 
-                      onClick={() => onNavigate('assistant')}
-                      className="text-teal-600 font-bold text-xs flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
-                    >
-                      <span>See Guidelines</span> 
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                ) : recsLoading ? (
+                  <div className="bg-white p-6 rounded-2xl border border-teal-100/45 shadow-sm flex items-center justify-center gap-2 relative z-10">
+                    <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
+                    <span className="text-xs text-slate-500">Matching schemes to your profile...</span>
                   </div>
-                </div>
+                ) : recsError ? (
+                  <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm relative z-10">
+                    <p className="text-xs text-rose-600">{recsError}</p>
+                  </div>
+                ) : recommendations.length === 0 ? (
+                  <div className="bg-white p-4 rounded-2xl border border-teal-100/45 shadow-sm relative z-10">
+                    <p className="text-xs text-slate-500">No confident matches found yet — check back after completing more of your profile.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 relative z-10">
+                    {recommendations.slice(0, 3).map((rec, i) => (
+                      <div key={i} className="bg-white p-4 rounded-2xl border border-teal-100/45 shadow-sm">
+                        <span className="px-2 py-0.5 bg-teal-100 text-teal-800 text-[9px] font-bold uppercase rounded-md tracking-wider mb-2.5 inline-block">
+                          Scheme Match
+                        </span>
+                        <h4 className="font-bold text-sm text-slate-950 mb-1">{rec.name}</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed mb-3">
+                          {rec.whyEligible}
+                        </p>
+                        <a 
+                          href={rec.officialLink} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-teal-600 font-bold text-xs flex items-center gap-1 hover:gap-2 transition-all cursor-pointer w-fit"
+                        >
+                          <span>Apply Now</span> 
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

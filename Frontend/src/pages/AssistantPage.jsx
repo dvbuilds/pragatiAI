@@ -4,32 +4,15 @@ import {
   Sparkles, Send, Mic, Paperclip, ChevronRight, HelpCircle, Check, 
   ArrowRight, ShieldCheck, AlertCircle, Info, Landmark, Compass, Globe
 } from 'lucide-react';
+import api from '../lib/api';
 
 export default function AssistantPage({ onNavigate, onAddRequest }) {
   const [messages, setMessages] = useState([
     {
       id: 'msg-1',
-      sender: 'user',
-      text: 'I need help understanding my home-based business taxes. Are there any local exemptions?',
-      timestamp: '10:14 AM'
-    },
-    {
-      id: 'msg-2',
       sender: 'ai',
-      text: 'Based on Ward 4 guidelines, you may qualify for the Small Business Tax Relief Program. Here are the key details:',
-      timestamp: '10:15 AM',
-      isAnalysis: true,
-      bullets: [
-        'Eligible home occupation permits: Exempt from local gross revenue fee if gross revenue is under $5,000.',
-        'Required Documents: Schedule C (Form 1040) must be filed with the City Tax Commission within 15 days of your state deadline.',
-        'Zoning Compliance: Your home-based business must comply with standard local noise & foot traffic guidelines.'
-      ],
-      formAssistance: {
-        title: 'Home-Based Business Exemption Request',
-        description: 'Verify your Ward 4 address and request a municipal fee waiver.',
-        buttonText: 'Start Form Assistance',
-        formType: 'tax-exemption'
-      }
+      text: "Hi, I'm CivicPulse AI. Ask me about permits, parking, sanitation schedules, zoning, local taxes, or anything else civic — I'll do my best to help.",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
 
@@ -53,7 +36,7 @@ export default function AssistantPage({ onNavigate, onAddRequest }) {
     scrollToBottom();
   }, [messages, isTyping, activeFormType]);
 
-  const handleSendMessage = (textToSend) => {
+  const handleSendMessage = async (textToSend) => {
     if (!textToSend.trim()) return;
 
     const userMsg = {
@@ -63,72 +46,33 @@ export default function AssistantPage({ onNavigate, onAddRequest }) {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
+    // Snapshot history (sender/text only, what the backend expects) before adding the new message
+    const history = messages.map(m => ({ sender: m.sender, text: m.text }));
+
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
     setIsTyping(true);
 
-    // Dynamic AI response based on keywords
-    setTimeout(() => {
-      setIsTyping(false);
-      const textLower = textToSend.toLowerCase();
-      let replyText = "I'm checking the District 4 municipal code database. Here's what I found:";
-      let bullets = [];
-      let formWidget = undefined;
-
-      if (textLower.includes('permit') || textLower.includes('parking') || textLower.includes('car')) {
-        replyText = "For parking permits in District 4, residential allowances are fully digitized. Here are the steps:";
-        bullets = [
-          "Annual Parking Permit fee: $45 (waived for senior citizens).",
-          "Verification Needed: Current vehicle registration matching your Ward 4 home address.",
-          "Visitor Passes: Each household is allocated 2 guest passes per year free of charge."
-        ];
-        formWidget = {
-          title: 'Residential Parking Permit Application',
-          description: 'Digitally apply for your local parking decal and register your plates.',
-          buttonText: 'Register Parking Decal',
-          formType: 'parking-permit'
-        };
-      } else if (textLower.includes('trash') || textLower.includes('recycle') || textLower.includes('waste') || textLower.includes('sanitation')) {
-        replyText = "District 4 Sanitation & Solid Waste schedule is as follows:";
-        bullets = [
-          "Regular Trash: Picked up every Tuesday and Friday morning by 7:00 AM.",
-          "Recycling & Compost: Picked up on Wednesdays.",
-          "Bulk Trash / Large Items: Requires 48-hour advance notice scheduled through our portal."
-        ];
-        formWidget = {
-          title: 'Schedule a Bulk Waste Pick-up',
-          description: 'Register items for local curbside dispatch.',
-          buttonText: 'Schedule Pick-up',
-          formType: 'bulk-waste'
-        };
-      } else if (textLower.includes('zoning') || textLower.includes('build') || textLower.includes('deck') || textLower.includes('house')) {
-        replyText = "Residential construction and backyard expansion projects in District 4 follow these standards:";
-        bullets = [
-          "Decks under 200 sq ft do not require a zoning variance if they are built 5 ft from the property line.",
-          "Permits: Standard building permits must be approved before construction commences.",
-          "Inspections: A municipal structural inspector must verify footings prior to pouring concrete."
-        ];
-      } else {
-        replyText = "I am CivicPulse AI, your 24/7 municipal counselor. I can help you with tax declarations, zoning limits, permit applications, or sanitation calendars.";
-        bullets = [
-          "Type 'renew parking permit' to begin dynamic registration.",
-          "Type 'bulk waste' to file a sanitation request.",
-          "Type 'zoning variance' to learn about backyard building rules."
-        ];
-      }
-
+    try {
+      const { data } = await api.post('/assistant/chat', { message: textToSend, history });
       const aiMsg = {
         id: `msg-ai-${Date.now()}`,
         sender: 'ai',
-        text: replyText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isAnalysis: true,
-        bullets,
-        formAssistance: formWidget
+        text: data.data.reply,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-
       setMessages(prev => [...prev, aiMsg]);
-    }, 1200);
+    } catch (err) {
+      const errorMsg = {
+        id: `msg-ai-error-${Date.now()}`,
+        sender: 'ai',
+        text: err?.response?.data?.message || "I couldn't reach the assistant service just now. Please try again in a moment.",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const startFormAssistance = (formType) => {
@@ -485,7 +429,7 @@ export default function AssistantPage({ onNavigate, onAddRequest }) {
               </div>
             </form>
             <p className="text-[10px] text-slate-400 mt-2 text-center">
-              CivicPulse AI Guide operates locally. Under municipal code, recommendations do not override statutory filings.
+              CivicPulse AI Guide is powered by AI and may be inaccurate. Recommendations do not override statutory filings — verify with official sources.
             </p>
           </div>
         </div>

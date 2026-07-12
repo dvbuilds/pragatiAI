@@ -4,15 +4,16 @@ import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
 import PublicPortalPage from './pages/PublicPortalPage';
 import AssistantPage from './pages/AssistantPage';
+import SettingsPage from './pages/SettingsPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { useAuth } from './context/AuthContext';
 
-const PROTECTED_TABS = ['dashboard', 'portal', 'assistant'];
+const PROTECTED_TABS = ['dashboard', 'portal', 'assistant', 'settings'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('landing');
-  const { user, authChecked, logout } = useAuth();
+  const { user, authChecked, logout, checkAuth } = useAuth();
 
   // Route guard: once we know whether there's a session, bounce
   // unauthenticated visitors away from protected tabs, and skip signed-in
@@ -186,6 +187,15 @@ export default function App() {
               onLogout={handleLogout}
               currentUser={user}
               onAddRequest={handleAssistantAddRequest}
+            />
+          )}
+
+          {activeTab === 'settings' && user && (
+            <SettingsPage
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+              currentUser={user}
+              onProfileUpdated={checkAuth}
             />
           )}
         </motion.div>
