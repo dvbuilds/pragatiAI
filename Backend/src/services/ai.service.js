@@ -157,4 +157,36 @@ Respond with ONLY a JSON array, no markdown fences:
   return parseJson(response.text);
 };
 
-export default { categorizeIssue, generateComplaintEmail, generateDocumentGuide, matchSchemes };
+/**
+ * Free-form conversational assistant for the chat UI. Takes the recent message
+ * history (sender/text pairs) and returns a reply, grounded with a system
+ * instruction describing what CivicPulse AI actually covers so it steers
+ * citizens toward the dedicated tools (issue reporting, complaint drafting,
+ * document guides, scheme matching) instead of hallucinating specifics.
+ */
+export const chatWithAssistant = async (history) => {
+  const systemInstruction = `You are CivicPulse AI, a municipal citizen assistant embedded in a civic-services app. Answer questions about permits, parking, sanitation schedules, zoning, local taxes, and general civic/government topics concisely and practically. Be upfront when an answer depends on the citizen's specific city/ward and could vary.
+
+The app also has four dedicated tools you should point users toward when relevant, rather than trying to fully complete these tasks yourself in chat:
+- Reporting a pothole, broken streetlight, or trash/sanitation issue with a photo and location
+- Drafting and sending a formal complaint email about waterlogging, inefficient government service, or crime rate
+- Getting step-by-step guidance (with the official link) for creating or updating a government document
+- Finding government welfare schemes they're eligible for based on age, gender, and income
+
+Keep replies under 120 words unless the user is asking for a detailed list of steps.`;
+
+  const contents = history.map((m) => ({
+    role: m.sender === 'user' ? 'user' : 'model',
+    parts: [{ text: m.text }],
+  }));
+
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents,
+    config: { systemInstruction },
+  });
+
+  return response.text;
+};
+
+export default { categorizeIssue, generateComplaintEmail, generateDocumentGuide, matchSchemes, chatWithAssistant };

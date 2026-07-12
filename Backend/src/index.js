@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {
   const server = app.listen(PORT, () => {
-    console.log(`Pragati AI backend running on port ${PORT}`);
+    console.log(`CivicPulse AI backend running on port ${PORT}`);
   });
 
   // Fail fast and loud on unexpected errors instead of limping along in a bad state
