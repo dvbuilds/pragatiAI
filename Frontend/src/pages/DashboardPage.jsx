@@ -5,6 +5,7 @@ import {
   MapPin, CheckCircle, AlertCircle, FileText, Settings, ExternalLink, Loader2, UserCog
 } from 'lucide-react';
 import IssueWizardModal from '../components/IssueWizardModal';
+import Sidebar from '../components/Sidebar';
 import api from '../lib/api';
 
 export default function DashboardPage({ onNavigate, requests, onAddRequest, onUpdateRequest, currentUser }) {
@@ -119,82 +120,23 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
     }
   };
 
+  const handleSidebarNavigate = (key) => {
+    if (key === 'report') {
+      setIsWizardOpen(true);
+      return;
+    }
+    onNavigate(key);
+  };
+
   return (
     <div className="bg-[#f7f9fb] text-[#191c1e] min-h-screen flex font-sans">
       
-      {/* SideNavBar Component */}
-      <aside className="hidden lg:flex flex-col h-screen sticky top-0 p-4 gap-2 bg-[#f2f4f6] border-r border-[#c6c6cd]/30 w-64 shadow-sm flex-shrink-0">
-        <div className="mb-8 px-4 py-2">
-          <button 
-            onClick={() => onNavigate('landing')}
-            className="font-extrabold text-xl text-black hover:text-teal-700 transition-colors text-left"
-          >
-            CivicPulse AI
-          </button>
-        </div>
-        
-        <div className="flex flex-col gap-6 mb-8 px-4">
-          <div className="flex flex-col gap-1.5">
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-200 shadow-sm border border-slate-300">
-              <img className="w-full h-full object-cover" src={alexAvatar} alt={currentUser?.fullName || 'Citizen'} />
-            </div>
-            <div>
-              <h3 className="font-bold text-sm text-slate-900 leading-tight">{currentUser?.fullName?.split(' ')[0] || 'Citizen'}</h3>
-              <p className="text-[10px] font-bold text-teal-700/80 uppercase tracking-wider mt-0.5">Verified Citizen</p>
-            </div>
-          </div>
-          
-          <button 
-            onClick={() => setIsWizardOpen(true)}
-            className="bg-black text-white font-semibold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-900 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Request</span>
-          </button>
-        </div>
-
-        <nav className="flex flex-col gap-1.5 flex-grow">
-          <button 
-            onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-3 bg-[#d5e3fd] text-[#0d1c2f] rounded-xl px-4 py-3 scale-[0.99] duration-200 text-left cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-teal-800" />
-            <span className="text-xs font-bold uppercase tracking-wider">Overview</span>
-          </button>
-          
-          <button 
-            onClick={() => onNavigate('assistant')}
-            className="flex items-center gap-3 text-slate-600 px-4 py-3 hover:bg-slate-200/50 rounded-xl transition-all text-left cursor-pointer"
-          >
-            <FileText className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">My Requests</span>
-          </button>
-
-          <button 
-            onClick={() => onNavigate('portal')}
-            className="flex items-center gap-3 text-slate-600 px-4 py-3 hover:bg-slate-200/50 rounded-xl transition-all text-left cursor-pointer"
-          >
-            <MapPin className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">Public Portal</span>
-          </button>
-
-          <button 
-            onClick={() => onNavigate('assistant')}
-            className="flex items-center gap-3 text-slate-600 px-4 py-3 hover:bg-slate-200/50 rounded-xl transition-all text-left cursor-pointer"
-          >
-            <Calendar className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">Deadlines</span>
-          </button>
-
-          <button 
-            onClick={() => onNavigate('settings')}
-            className="flex items-center gap-3 text-slate-600 px-4 py-3 hover:bg-slate-200/50 rounded-xl transition-all text-left cursor-pointer mt-auto"
-          >
-            <Settings className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">Settings</span>
-          </button>
-        </nav>
-      </aside>
+      <Sidebar 
+        activeTab="dashboard" 
+        onNavigate={handleSidebarNavigate} 
+        onLogout={onLogout} 
+        currentUser={currentUser} 
+      />
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-h-screen">
@@ -268,9 +210,13 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
               </div>
 
               <div className="h-4 w-[1px] bg-[#c6c6cd]/50" />
-              
-              <button className="text-black text-xs font-semibold flex items-center gap-1">
-                English <span className="text-slate-400 text-[10px]">▼</span>
+
+              <button 
+                onClick={() => setIsWizardOpen(true)}
+                className="bg-black text-white font-semibold text-xs py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-900 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">New Request</span>
               </button>
             </div>
           </div>
