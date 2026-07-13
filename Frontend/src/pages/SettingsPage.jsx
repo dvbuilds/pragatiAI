@@ -4,6 +4,7 @@ import {
   ArrowLeft, User, Save, LogOut, Loader2, CheckCircle2, AlertCircle, ShieldCheck
 } from 'lucide-react';
 import api from '../lib/api';
+import Sidebar from '../components/Sidebar';
 
 const GENDER_OPTIONS = [
   { value: '', label: 'Prefer not to say' },
@@ -85,31 +86,40 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] text-[#191c1e] font-sans">
-      {/* Header */}
-      <header className="w-full h-16 bg-white border-b border-[#c6c6cd]/40 flex items-center px-6 md:px-10 sticky top-0 z-30 shadow-sm">
-        <div className="w-full max-w-3xl mx-auto flex items-center justify-between">
-          <button
-            onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-2 text-sm font-semibold text-[#45464d] hover:text-[#131b2e] transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-          <span className="font-extrabold text-lg text-black">CivicPulse AI</span>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#f7f9fb] text-[#191c1e] font-sans flex">
+      
+      <Sidebar 
+        activeTab="settings" 
+        onNavigate={onNavigate} 
+        onLogout={onLogout} 
+        currentUser={currentUser} 
+      />
 
-      <main className="max-w-3xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-[#131b2e] tracking-tight mb-1">Account Settings</h1>
-          <p className="text-sm text-[#45464d]">
-            Keep your profile current — age, gender, and income are what CivicPulse AI uses to match you with government schemes you're eligible for.
-          </p>
-        </div>
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Header */}
+        <header className="w-full h-16 bg-white border-b border-[#c6c6cd]/40 flex items-center px-6 md:px-10 sticky top-0 z-30 shadow-sm">
+          <div className="w-full max-w-3xl mx-auto flex items-center justify-between">
+            <button
+              onClick={() => onNavigate('dashboard')}
+              className="flex items-center gap-2 text-sm font-semibold text-[#45464d] hover:text-[#131b2e] transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </button>
+            <span className="lg:hidden font-extrabold text-lg text-black">CivicPulse AI</span>
+          </div>
+        </header>
 
-        <form onSubmit={handleSubmit} className="bg-white border border-[#c6c6cd]/40 rounded-2xl shadow-sm p-6 md:p-8 space-y-8">
-          {/* Basic info */}
+        <main className="max-w-3xl mx-auto px-6 py-10 w-full">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-[#131b2e] tracking-tight mb-1">Account Settings</h1>
+            <p className="text-sm text-[#45464d]">
+              Keep your profile current — age, gender, and income are what CivicPulse AI uses to match you with government schemes you're eligible for.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="bg-white border border-[#c6c6cd]/40 rounded-2xl shadow-sm p-6 md:p-8 space-y-8">
+            {/* Basic info */}
           <section className="space-y-4">
             <div className="flex items-center gap-2 text-[#131b2e]">
               <User className="w-4 h-4" />
@@ -263,7 +273,8 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
             </button>
           </div>
         </form>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

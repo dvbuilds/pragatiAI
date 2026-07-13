@@ -8,7 +8,7 @@ import IssueWizardModal from '../components/IssueWizardModal';
 import Sidebar from '../components/Sidebar';
 import api from '../lib/api';
 
-export default function DashboardPage({ onNavigate, requests, onAddRequest, onUpdateRequest, currentUser }) {
+export default function DashboardPage({ onNavigate, requests, onAddRequest, onUpdateRequest, currentUser, onLogout }) {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 

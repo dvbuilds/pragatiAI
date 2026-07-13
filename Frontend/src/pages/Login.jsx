@@ -8,6 +8,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Navbar from '../components/Navbar';
 
 export default function Login({ onNavigate }) {
   const { login } = useAuth();
@@ -47,20 +48,7 @@ export default function Login({ onNavigate }) {
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[#89f5e7]/10 rounded-full blur-[120px] -ml-40 -mb-40 pointer-events-none z-0"></div>
 
       {/* Top Header Navigation */}
-      <header className="w-full h-16 flex items-center justify-between px-6 md:px-10 max-w-[1280px] mx-auto z-10 relative">
-        <button
-          onClick={() => onNavigate('landing')}
-          className="text-2xl font-bold text-[#131b2e] tracking-tight cursor-pointer"
-        >
-          CivicPulse AI
-        </button>
-        <div className="flex items-center gap-6">
-          <span className="text-sm text-[#45464d] hidden md:inline">Need help?</span>
-          <a href="#" className="text-sm font-semibold text-[#131b2e] hover:underline flex items-center gap-0.5">
-            Contact Support
-          </a>
-        </div>
-      </header>
+      <Navbar onNavigate={onNavigate} activeTab="login" />
 
       {/* Main Container Area */}
       <main className="flex-grow flex items-center justify-center p-6 md:p-10 z-10 relative">

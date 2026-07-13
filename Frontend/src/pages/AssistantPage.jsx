@@ -5,8 +5,9 @@ import {
   ArrowRight, ShieldCheck, AlertCircle, Info, Landmark, Compass, Globe
 } from 'lucide-react';
 import api from '../lib/api';
+import Sidebar from '../components/Sidebar';
 
-export default function AssistantPage({ onNavigate, onAddRequest }) {
+export default function AssistantPage({ onNavigate, onLogout, currentUser, onAddRequest }) {
   const [messages, setMessages] = useState([
     {
       id: 'msg-1',
@@ -129,9 +130,26 @@ export default function AssistantPage({ onNavigate, onAddRequest }) {
     { title: "Permit Renewals", prompt: "I need to renew my residential parking permit for license plate CP-882." }
   ];
 
+  const handleSidebarNavigate = (key) => {
+    if (key === 'report') {
+      // No issue-report modal lives on this page; send the user to Dashboard,
+      // where the sidebar's Report item opens it directly.
+      onNavigate('dashboard');
+      return;
+    }
+    onNavigate(key);
+  };
+
   return (
     <div className="bg-[#f7f9fb] text-[#191c1e] min-h-screen flex font-sans">
       
+      <Sidebar 
+        activeTab="assistant" 
+        onNavigate={handleSidebarNavigate} 
+        onLogout={onLogout} 
+        currentUser={currentUser} 
+      />
+
       {/* SideNavBar/Assistant Sidebar */}
       <aside className="hidden lg:flex flex-col h-screen sticky top-0 p-4 gap-6 bg-[#f2f4f6] border-r border-[#c6c6cd]/30 w-72 shadow-sm flex-shrink-0">
         <div className="px-4 py-2">

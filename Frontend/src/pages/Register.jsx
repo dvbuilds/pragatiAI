@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  Landmark,
   Sparkles,
   TrendingUp,
   User,
@@ -18,6 +17,7 @@ import {
   Check,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import Navbar from "../components/Navbar";
 
 export default function Register({ onNavigate }) {
   const { register } = useAuth();
@@ -94,35 +94,7 @@ export default function Register({ onNavigate }) {
       </div>
 
       {/* Top Header */}
-      <header className="w-full h-16 bg-white border-b border-[#e2e8f0] flex items-center px-6 md:px-10 z-10">
-        <div className="w-full max-w-7xl mx-auto flex justify-between items-center">
-          {/* Logo */}
-          <button
-            onClick={() => onNavigate('landing')}
-            className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity"
-          >
-            <div className="bg-[#131b2e] p-2 rounded-lg text-white shadow-md shadow-slate-900/10 flex items-center justify-center">
-              <Landmark className="w-5 h-5 text-[#89f5e7]" />
-            </div>
-            <span className="font-semibold text-lg tracking-tight text-[#131b2e]">
-              CivicPulse <span className="text-[#0c9488] font-bold">AI</span>
-            </span>
-          </button>
-
-          {/* Right Header Navigation */}
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-[#45464d] hidden sm:inline font-medium">
-              Already have an account?
-            </span>
-            <button
-              onClick={() => onNavigate('login')}
-              className="text-sm font-bold text-[#131b2e] hover:text-[#0c9488] transition-colors py-2 px-3 rounded-md hover:bg-slate-100/60"
-            >
-              Sign In
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar onNavigate={onNavigate} activeTab="register" />
 
       {/* Main Container */}
       <main className="flex-grow flex items-center justify-center py-12 px-4 md:px-8 z-10 max-w-7xl w-full mx-auto">

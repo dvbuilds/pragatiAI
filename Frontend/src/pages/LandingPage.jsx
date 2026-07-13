@@ -4,6 +4,7 @@ import {
   Sparkles, Search, ArrowRight, FileText, Vote, HeartPulse, Bus, Leaf, 
   CheckCircle, Star, Send, ArrowUpRight, Globe
 } from 'lucide-react';
+import Navbar from '../components/Navbar';
 
 export default function LandingPage({ onNavigate }) {
   const [searchVal, setSearchVal] = useState('');
@@ -33,59 +34,9 @@ export default function LandingPage({ onNavigate }) {
   };
 
   return (
-    <div className="bg-[#f7f9fb] text-[#191c1e] min-h-screen selection:bg-teal-500/20 font-sans">
+    <div id="top" className="bg-[#f7f9fb] text-[#191c1e] min-h-screen selection:bg-teal-500/20 font-sans">
       
-      {/* TopNavBar */}
-      <nav className="bg-[#f7f9fb] border-b border-[#c6c6cd]/50 sticky top-0 left-0 right-0 z-50 backdrop-blur-md bg-opacity-95">
-        <div className="flex justify-between items-center w-full px-6 md:px-12 max-w-7xl mx-auto h-16">
-          <div className="flex items-center gap-8">
-            <a 
-              href="#" 
-              onClick={(e) => { e.preventDefault(); onNavigate('landing'); }}
-              className="text-xl font-extrabold tracking-tight text-black"
-            >
-              CivicPulse AI
-            </a>
-            <div className="hidden md:flex gap-6">
-              <button 
-                onClick={() => onNavigate('dashboard')} 
-                className="text-[#515f74] hover:text-black transition-colors text-sm font-semibold py-1"
-              >
-                Dashboard
-              </button>
-              <button 
-                onClick={() => onNavigate('assistant')} 
-                className="text-[#515f74] hover:text-black transition-colors text-sm font-semibold py-1"
-              >
-                Services
-              </button>
-              <button 
-                onClick={() => onNavigate('portal')} 
-                className="text-[#515f74] hover:text-black transition-colors text-sm font-semibold py-1"
-              >
-                Public Portal
-              </button>
-              <a 
-                href="#resources" 
-                className="text-[#515f74] hover:text-black transition-colors text-sm font-semibold py-1"
-              >
-                Resources
-              </a>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="text-[#515f74] hover:text-black transition-colors text-sm font-semibold hidden sm:block">
-              Language
-            </button>
-            <button 
-              onClick={() => onNavigate('dashboard')}
-              className="bg-black text-white px-5 py-2 rounded-full text-xs font-semibold hover:opacity-85 active:scale-98 transition-all"
-            >
-              Sign In
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Navbar onNavigate={onNavigate} activeTab="landing" />
 
       {/* Hero Section */}
       <section className="relative min-h-[75vh] flex flex-col items-center justify-center text-center px-4 overflow-hidden pt-12 pb-16">
@@ -167,7 +118,7 @@ export default function LandingPage({ onNavigate }) {
       </section>
 
       {/* Bento Services Grid */}
-      <section className="py-16 px-6 md:px-12 max-w-7xl mx-auto">
+      <section id="features" className="py-16 px-6 md:px-12 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div className="space-y-2">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Key City Services</h2>

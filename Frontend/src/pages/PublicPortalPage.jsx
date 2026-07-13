@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  MapPin, Search, AlertCircle, CheckCircle, Sparkles, Plus, 
-  Settings, Info, Zap, Trash2, Shield, FileText, Calendar, Share2, Globe
+  Search, AlertCircle, CheckCircle, Sparkles, Plus, 
+  Info, Zap, Trash2, Share2, Globe
 } from 'lucide-react';
 import IssueWizardModal from '../components/IssueWizardModal';
+import Sidebar from '../components/Sidebar';
 
-export default function PublicPortalPage({ onNavigate, issues, onAddIssue }) {
+export default function PublicPortalPage({ onNavigate, onLogout, currentUser, issues, onAddIssue }) {
   const [selectedIssue, setSelectedIssue] = useState(issues[0] || null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [mapSearch, setMapSearch] = useState('');
@@ -58,126 +59,49 @@ export default function PublicPortalPage({ onNavigate, issues, onAddIssue }) {
     return matchesSearch && matchesCategory;
   });
 
+  const handleSidebarNavigate = (key) => {
+    if (key === 'report') {
+      setIsWizardOpen(true);
+      return;
+    }
+    onNavigate(key);
+  };
+
   return (
-    <div className="bg-[#f7f9fb] text-[#191c1e] min-h-screen flex flex-col font-sans">
+    <div className="bg-[#f7f9fb] text-[#191c1e] min-h-screen flex font-sans">
       
-      {/* TopNavBar */}
-      <header className="bg-white border-b border-[#c6c6cd]/50 fixed top-0 w-full z-50 shadow-sm">
-        <div className="flex justify-between items-center w-full px-6 md:px-12 max-w-7xl mx-auto h-16">
-          <div className="flex items-center gap-8">
-            <span 
-              onClick={() => onNavigate('landing')} 
-              className="text-xl font-extrabold tracking-tight text-black cursor-pointer"
-            >
-              CivicPulse AI
-            </span>
-            <nav className="hidden md:flex items-center gap-6">
-              <button 
-                onClick={() => onNavigate('dashboard')} 
-                className="text-[#515f74] hover:text-black transition-colors font-semibold text-sm"
-              >
-                Dashboard
-              </button>
-              <button 
-                onClick={() => onNavigate('assistant')} 
-                className="text-[#515f74] hover:text-black transition-colors font-semibold text-sm"
-              >
-                Services
-              </button>
-              <button 
-                onClick={() => onNavigate('portal')} 
-                className="text-black border-b-2 border-black pb-1 font-semibold text-sm"
-              >
-                Public Portal
-              </button>
-              <button 
+      <Sidebar 
+        activeTab="portal" 
+        onNavigate={handleSidebarNavigate} 
+        onLogout={onLogout} 
+        currentUser={currentUser} 
+      />
+
+      <div className="flex-1 flex flex-col min-h-screen">
+
+        {/* TopAppBar */}
+        <header className="bg-white border-b border-[#c6c6cd]/50 sticky top-0 z-40 shadow-sm">
+          <div className="flex justify-between items-center w-full px-6 md:px-12 h-16">
+            <div className="lg:hidden">
+              <span 
                 onClick={() => onNavigate('landing')} 
-                className="text-[#515f74] hover:text-black transition-colors font-semibold text-sm"
+                className="text-xl font-extrabold tracking-tight text-black cursor-pointer"
               >
-                Resources
-              </button>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="text-[#515f74] hover:text-black font-semibold text-xs py-2">
-              Language
-            </button>
-            <button 
-              onClick={() => onNavigate('dashboard')}
-              className="bg-black text-white font-semibold text-xs px-5 py-2 rounded-lg hover:opacity-85 transition-all"
-            >
-              Sign In
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex-grow pt-16 flex flex-col lg:flex-row">
-        
-        {/* Sidebar Navigation */}
-        <aside className="hidden lg:flex flex-col h-[calc(100vh-64px)] sticky top-16 p-4 gap-2 w-64 bg-[#f2f4f6] border-r border-[#c6c6cd]/30 shadow-sm flex-shrink-0">
-          <div className="mb-6 px-4 py-2">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center overflow-hidden shadow-sm">
-                <img className="w-full h-full object-cover" src={alexPortrait} alt="Alex Reed Portrait" />
-              </div>
-              <div>
-                <p className="font-bold text-xs text-slate-900 leading-tight">Alex Reed</p>
-                <p className="text-[10px] text-slate-400 font-semibold uppercase">Verified Citizen</p>
-              </div>
+                CivicPulse AI
+              </span>
             </div>
-          </div>
-          
-          <button 
-            onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-3 text-slate-600 hover:bg-slate-200/50 rounded-xl px-4 py-3 transition-all text-left cursor-pointer"
-          >
-            <Shield className="w-4 h-4 text-slate-400" />
-            <span className="text-xs font-bold uppercase tracking-wider">Overview</span>
-          </button>
-          
-          <button 
-            onClick={() => onNavigate('assistant')}
-            className="flex items-center gap-3 text-slate-600 hover:bg-slate-200/50 rounded-xl px-4 py-3 transition-all text-left cursor-pointer"
-          >
-            <FileText className="w-4 h-4 text-slate-400" />
-            <span className="text-xs font-bold uppercase tracking-wider">My Requests</span>
-          </button>
-
-          <button 
-            onClick={() => onNavigate('portal')}
-            className="flex items-center gap-3 bg-[#d5e3fd] text-[#0d1c2f] rounded-xl px-4 py-3 scale-[0.99] transition-all text-left cursor-pointer font-bold"
-          >
-            <MapPin className="w-4 h-4 text-teal-800" />
-            <span className="text-xs uppercase tracking-wider">Documents</span>
-          </button>
-
-          <button 
-            onClick={() => onNavigate('assistant')}
-            className="flex items-center gap-3 text-slate-600 hover:bg-slate-200/50 rounded-xl px-4 py-3 transition-all text-left cursor-pointer"
-          >
-            <Calendar className="w-4 h-4 text-slate-400" />
-            <span className="text-xs font-bold uppercase tracking-wider">Deadlines</span>
-          </button>
-
-          <button 
-            onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-3 text-slate-600 hover:bg-slate-200/50 rounded-xl px-4 py-3 transition-all text-left cursor-pointer mt-auto"
-          >
-            <Settings className="w-4 h-4 text-slate-400" />
-            <span className="text-xs font-bold uppercase tracking-wider">Settings</span>
-          </button>
-
-          <div className="mt-4 px-2">
+            <div className="hidden lg:block text-slate-500 text-xs font-medium">
+              Public Portal • <span className="text-black font-bold">Community Watch</span>
+            </div>
             <button 
               onClick={() => setIsWizardOpen(true)}
-              className="w-full flex items-center justify-center gap-2 bg-[#0c9488] hover:bg-teal-700 text-white font-bold text-xs py-3.5 rounded-xl shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+              className="bg-black text-white font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-slate-900 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
             >
-              <Plus className="w-4.5 h-4.5" />
+              <Plus className="w-4 h-4" />
               <span>New Request</span>
             </button>
           </div>
-        </aside>
+        </header>
 
         {/* Main Content Area */}
         <section className="flex-grow p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-8">
@@ -392,32 +316,32 @@ export default function PublicPortalPage({ onNavigate, issues, onAddIssue }) {
 
           </div>
         </section>
-      </div>
 
-      {/* Footer */}
-      <footer className="bg-[#eceef0] border-t border-[#c6c6cd] w-full py-12 px-6 md:px-12 mt-auto">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-8">
-          <div className="max-w-xs space-y-3">
-            <span className="font-extrabold text-lg text-black block">CivicPulse AI</span>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Empowering citizens through intelligent digital infrastructure and transparent governance.
-            </p>
+        {/* Footer */}
+        <footer className="bg-[#eceef0] border-t border-[#c6c6cd] w-full py-12 px-6 md:px-12 mt-auto">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-8">
+            <div className="max-w-xs space-y-3">
+              <span className="font-extrabold text-lg text-black block">CivicPulse AI</span>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Empowering citizens through intelligent digital infrastructure and transparent governance.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-xs text-slate-500 font-bold">
+              <a href="#" className="hover:underline">Privacy Policy</a>
+              <a href="#" className="hover:underline">Terms of Service</a>
+              <a href="#" className="hover:underline">Accessibility Standard</a>
+              <a href="#" className="hover:underline">Contact Support</a>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-xs text-slate-500 font-bold">
-            <a href="#" className="hover:underline">Privacy Policy</a>
-            <a href="#" className="hover:underline">Terms of Service</a>
-            <a href="#" className="hover:underline">Accessibility Standard</a>
-            <a href="#" className="hover:underline">Contact Support</a>
+          <div className="max-w-7xl mx-auto border-t border-[#c6c6cd]/50 mt-8 pt-6 flex flex-col sm:flex-row justify-between gap-4 text-xs text-slate-400">
+            <p>© 2026 Digital Government Services. All rights reserved. Powered by CivicPulse AI.</p>
+            <div className="flex gap-4">
+              <button className="text-slate-400 hover:text-black"><Globe className="w-4 h-4" /></button>
+              <button className="text-slate-400 hover:text-black"><Share2 className="w-4 h-4" /></button>
+            </div>
           </div>
-        </div>
-        <div className="max-w-7xl mx-auto border-t border-[#c6c6cd]/50 mt-8 pt-6 flex flex-col sm:flex-row justify-between gap-4 text-xs text-slate-400">
-          <p>© 2026 Digital Government Services. All rights reserved. Powered by CivicPulse AI.</p>
-          <div className="flex gap-4">
-            <button className="text-slate-400 hover:text-black"><Globe className="w-4 h-4" /></button>
-            <button className="text-slate-400 hover:text-black"><Share2 className="w-4 h-4" /></button>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
 
       {/* Multi-Step Wizard Modal */}
       <IssueWizardModal 
