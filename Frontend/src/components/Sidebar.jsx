@@ -15,7 +15,6 @@ const NAV_ITEMS = [
   { key: 'documents', label: 'Documents', icon: FileText },
   { key: 'portal', label: 'Public Portal', icon: MapPin },
   { key: 'schemes', label: 'Government Scheme', icon: Landmark },
-  { key: 'report', label: 'Report', icon: AlertTriangle },
   { key: 'complaints', label: 'Complaints', icon: Mail },
 ];
 

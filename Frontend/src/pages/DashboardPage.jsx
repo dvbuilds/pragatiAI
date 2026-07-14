@@ -351,59 +351,6 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
 
           </div>
 
-          {/* Town Hall Calendar */}
-          <div className="bg-white border border-[#c6c6cd]/40 rounded-3xl p-6 shadow-sm">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-              <div>
-                <h2 className="font-bold text-lg text-slate-950">Upcoming Town Halls &amp; Events</h2>
-                <p className="text-xs text-slate-400">Stay engaged with your local representatives.</p>
-              </div>
-              <div className="flex gap-1.5">
-                <button className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 text-slate-600">
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 text-slate-600">
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {events.map((event) => (
-                <div 
-                  key={event.id}
-                  onClick={() => setSelectedEvent(event)}
-                  className="group cursor-pointer space-y-3 text-left"
-                >
-                  <div className="h-36 w-full rounded-2xl overflow-hidden relative shadow-sm border border-slate-100">
-                    {event.isVirtual && (
-                      <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center z-10 backdrop-blur-[1px]">
-                        <span className="text-white font-extrabold text-[10px] tracking-widest uppercase border border-white/30 px-3 py-1 bg-black/30 rounded-full">
-                          Virtual Only
-                        </span>
-                      </div>
-                    )}
-                    <img 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                      src={event.image} 
-                      alt={event.title} 
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-teal-700 uppercase tracking-wider">{event.date}</p>
-                    <h4 className="font-bold text-sm text-slate-900 group-hover:text-teal-600 transition-colors leading-tight">
-                      {event.title}
-                    </h4>
-                    <p className="text-xs text-slate-400 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-slate-300" />
-                      <span>{event.location}</span>
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
         </section>
 
         {/* Footer */}

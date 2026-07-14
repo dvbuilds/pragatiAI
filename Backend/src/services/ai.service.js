@@ -12,6 +12,22 @@ const parseJson = (text) => {
   return JSON.parse(cleaned);
 };
 
+// Small helper so every call site doesn't repeat the chat.completions shape.
+const askGroq = async (prompt, { systemInstruction } = {}) => {
+  const messages = [];
+  if (systemInstruction) {
+    messages.push({ role: 'system', content: systemInstruction });
+  }
+  messages.push({ role: 'user', content: prompt });
+
+  const response = await ai.chat.completions.create({
+    model: MODEL,
+    messages,
+  });
+
+  return response.choices[0].message.content;
+};
+
 /**
  * Categorizes a civic issue report (pothole / streetlight / trash / noise / other),
  * assigns a department + priority. Replaces the frontend's mock setTimeout logic
@@ -32,11 +48,8 @@ Respond with ONLY a JSON object, no markdown, no preamble, in this exact shape:
 }`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: MODEL,
-      contents: prompt,
-    });
-    return parseJson(response.text);
+    const text = await askGroq(prompt);
+    return parseJson(text);
   } catch (err) {
     console.error('AI categorization failed, falling back to keyword match:', err.message);
     return keywordFallbackCategorize(description);
@@ -92,8 +105,8 @@ Respond with ONLY a JSON object, no markdown fences:
   "body": "<the full email body including greeting and signature>"
 }`;
 
-  const response = await ai.models.generateContent({ model: MODEL, contents: prompt });
-  return parseJson(response.text);
+  const text = await askGroq(prompt);
+  return parseJson(text);
 };
 
 /**
@@ -119,8 +132,8 @@ Respond with ONLY a JSON object, no markdown fences:
   "notes": "<any important caveats>"
 }`;
 
-  const response = await ai.models.generateContent({ model: MODEL, contents: prompt });
-  const guide = parseJson(response.text);
+  const text = await askGroq(prompt);
+  const guide = parseJson(text);
   guide.officialLink = officialLink || guide.officialLink || null;
   return guide;
 };
@@ -156,8 +169,8 @@ Respond with ONLY a JSON array, no markdown fences:
   }
 ]`;
 
-  const response = await ai.models.generateContent({ model: MODEL, contents: prompt });
-  return parseJson(response.text);
+  const text = await askGroq(prompt);
+  return parseJson(text);
 };
 
 /**
@@ -178,18 +191,20 @@ The app also has four dedicated tools you should point users toward when relevan
 
 Keep replies under 120 words unless the user is asking for a detailed list of steps.`;
 
-  const contents = history.map((m) => ({
-    role: m.sender === 'user' ? 'user' : 'model',
-    parts: [{ text: m.text }],
-  }));
+  const messages = [
+    { role: 'system', content: systemInstruction },
+    ...history.map((m) => ({
+      role: m.sender === 'user' ? 'user' : 'assistant',
+      content: m.text,
+    })),
+  ];
 
-  const response = await ai.models.generateContent({
+  const response = await ai.chat.completions.create({
     model: MODEL,
-    contents,
-    config: { systemInstruction },
+    messages,
   });
 
-  return response.text;
+  return response.choices[0].message.content;
 };
 
 export default { categorizeIssue, generateComplaintEmail, generateDocumentGuide, matchSchemes, chatWithAssistant };

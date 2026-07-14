@@ -5,11 +5,14 @@ import DashboardPage from './pages/DashboardPage';
 import PublicPortalPage from './pages/PublicPortalPage';
 import AssistantPage from './pages/AssistantPage';
 import SettingsPage from './pages/SettingsPage';
+import DocumentPage from './pages/DocumentPage';
+import GovernmentScheme from './pages/GovernmentScheme';
+import Complaint from './pages/Complaint';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { useAuth } from './context/AuthContext';
 
-const PROTECTED_TABS = ['dashboard', 'portal', 'assistant', 'settings'];
+const PROTECTED_TABS = ['dashboard', 'portal', 'assistant', 'settings', 'documents', 'schemes', 'complaints'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('landing');
@@ -196,6 +199,30 @@ export default function App() {
               onLogout={handleLogout}
               currentUser={user}
               onProfileUpdated={checkAuth}
+            />
+          )}
+
+          {activeTab === 'documents' && user && (
+            <DocumentPage
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+              currentUser={user}
+            />
+          )}
+
+          {activeTab === 'schemes' && user && (
+            <GovernmentScheme
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+              currentUser={user}
+            />
+          )}
+
+          {activeTab === 'complaints' && user && (
+            <Complaint
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+              currentUser={user}
             />
           )}
         </motion.div>
