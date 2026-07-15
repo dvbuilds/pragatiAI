@@ -6,6 +6,7 @@ import {
   listIssues,
   getIssue,
   updateIssueStatus,
+  getPortalStats,
 } from '../controllers/issue.controller.js';
 
 const router = Router();
@@ -14,6 +15,7 @@ router.use(verifyJWT);
 
 router.post('/', upload.single('photo'), createIssue);
 router.get('/', listIssues);
+router.get('/stats', getPortalStats);
 router.get('/:id', getIssue);
 router.patch('/:id/status', requireRole('admin'), updateIssueStatus);
 

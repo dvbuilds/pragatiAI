@@ -2,18 +2,17 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, Sparkles, Plus, 
-  Info, Share2, Globe, MapPin, RefreshCw
+  Info, Share2, Globe, MapPin, RefreshCw, CheckCircle2
 } from 'lucide-react';
 import IssueWizardModal from '../components/IssueWizardModal';
 import Sidebar from '../components/Sidebar';
 import CivicMap from '../components/CivicMap';
 import useGeolocation from '../hooks/useGeolocation';
-import { fetchIssues, getIssueTitle, timeAgo } from '../lib/issueService';
+import { fetchIssues, fetchPortalStats, getIssueTitle, timeAgo } from '../lib/issueService';
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const SEARCH_RADIUS_KM = 10;
 
-export default function PublicPortalPage({ onNavigate, onLogout, currentUser, issues, onAddIssue }) {
+export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [mapSearch, setMapSearch] = useState('');
@@ -27,6 +26,11 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
   const [liveIssues, setLiveIssues] = useState([]);
   const [issuesLoading, setIssuesLoading] = useState(true);
   const [issuesError, setIssuesError] = useState(null);
+
+  // Real portal-wide stats (resolved-this-week count + recently resolved
+  // feed) — pulled from the backend instead of being hardcoded.
+  const [portalStats, setPortalStats] = useState({ resolvedThisWeek: 0, recentlyResolved: [] });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const loadNearbyIssues = useCallback(async () => {
     setIssuesLoading(true);
@@ -51,33 +55,15 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geoStatus, location.lat, location.lng]);
 
-  // Portrait image hotlinked from HTML
-  const alexPortrait = "https://lh3.googleusercontent.com/aida-public/AB6AXuBWqINPv6Z2M91XrcOVuPpgtGz0DE4osfPZKXFFxZNNkK7sS6njt9U7G-9thun3jnJvGfCeAmvEoIkzh1NTNuhqe3dE_5CBFviULIHA7qxBHxixsVGaDLSFIFqFcp9fAUJx-jZM4gfmzMcLwlZV5HWjgys1vas_FOJMb2-smcCEuoMdzV5H2uvSVjLU1MNpL5fU13jbgak18j78YUvmPulvhZ23gkBaKBeesYLn7omGk6LTaeYoBV9xBQ";
-
-  // Recently Resolved Feed images hotlinked from HTML
-  const resolvedItems = [
-    {
-      id: "res-1",
-      title: "Broken Streetlight - 5th Ave",
-      time: "Today, 10:24 AM",
-      description: "Crew replaced the sensor. Area is now lit.",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB7U7YcMLKTgEAJ_C4tRdTkPebFEssfvz-H9MOAZjep0VaffZSp6kmg7qvnrrAyhj7P5zHUPpHsALJHGd96pg647e5IkSFrlxU_hIEmepeE65A6M8mGzLTA7mO-VI9DPxMnRxref2Nq0HpIAWILRoAL5-mkEd_tUIqXfsYV4wS8Ji06bcaYRffO0kQFYtqwe2zxiqyF41TLxjEgs44mPI376CCfZcJnd0jVTQWi-txJaWF68C2HHBse_A"
-    },
-    {
-      id: "res-2",
-      title: "Major Pothole - West Gate",
-      time: "Yesterday",
-      description: "Repaving complete. Road fully reopened.",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAPZrjd8vtZTBPkX-SA1V4097LJORBr6MbHhoraK5yXt6MH4EJbM601LfKtQVpYbRRZ2NT231lyJIWmVzvVihxo3Pj1c-ju2xlj1LEemGLF67uGKr2gZGYKrhGrNl_uJY8JbVZdMluih7j1Cee9qO98ISo-AEHRPUn_hau72cWZXX_nYjPeKSxsLhCsHXm00TvI4wYFk5mwWV71u_Wam2oHde7sfthtJ4aO1ftONGNnHmATQMzv13L_fw"
-    },
-    {
-      id: "res-3",
-      title: "Sanitation - Central Park",
-      time: "Oct 24",
-      description: "Overflowing bins cleared and scheduled.",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCjIxFbggGISi63BxX7Vj9hXpmzDpc0vWDFXF8Mu9a0LpgHvC5lfTktXlxVOOyaqyze9PRq5CNQzdtPGIH_H2jVT7npueTma5sVStx6amjNH21XxfX0V-zfl8h222GlYrAudufKVTJLZQq5ST3tVv_94V36-nn7t1dnLy_gZi1T2JmnwiSzSR2v0Hs7krVaVmRRztq2Jk5hf6WWnObzmi0Sce43xpxMUIG4fbMBhN_zzCnHZqYmgsvZBw"
-    }
-  ];
+  useEffect(() => {
+    let cancelled = false;
+    setStatsLoading(true);
+    fetchPortalStats()
+      .then((data) => { if (!cancelled) setPortalStats(data); })
+      .catch(() => { /* non-critical — the badge/feed just stay empty */ })
+      .finally(() => { if (!cancelled) setStatsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   // Filter live issues based on the search box + category pills
   const filteredIssues = useMemo(() => {
@@ -88,6 +74,25 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
       return matchesSearch && matchesCategory;
     });
   }, [liveIssues, mapSearch, activeFilter]);
+
+  // A real, data-driven insight computed from the nearby reports actually
+  // loaded from the backend — not a static hardcoded quote.
+  const neighborhoodInsight = useMemo(() => {
+    if (liveIssues.length === 0) return null;
+    const counts = {};
+    let resolvedCount = 0;
+    liveIssues.forEach((issue) => {
+      counts[issue.type] = (counts[issue.type] || 0) + 1;
+      if (issue.status === 'resolved') resolvedCount += 1;
+    });
+    const topType = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const topLabel = topType ? getIssueTitle({ type: topType }) : null;
+    return {
+      total: liveIssues.length,
+      resolvedCount,
+      topLabel,
+    };
+  }, [liveIssues]);
 
   // Keep a sensible default selection once reports load in
   useEffect(() => {
@@ -156,7 +161,9 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
             <div>
               <div className="bg-white border border-[#c6c6cd]/50 px-4 py-2.5 rounded-full flex items-center gap-2 shadow-sm">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#0c9488] animate-pulse"></span>
-                <span className="font-bold text-xs text-[#0c9488]">42 Issues Fixed This Week</span>
+                <span className="font-bold text-xs text-[#0c9488]">
+                  {statsLoading ? 'Loading stats...' : `${portalStats.resolvedThisWeek} Issue${portalStats.resolvedThisWeek === 1 ? '' : 's'} Fixed This Week`}
+                </span>
               </div>
             </div>
           </div>
@@ -248,7 +255,6 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
               {/* Real Google Map */}
               <div className="w-full h-full relative select-none">
                 <CivicMap
-                  apiKey={GOOGLE_MAPS_API_KEY}
                   center={location}
                   userLocation={!isDefault ? location : null}
                   issues={filteredIssues}
@@ -287,18 +293,29 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
                         {selectedIssue.status === 'resolved' ? 'Resolved Issue' : 'Active Issue'}
                       </span>
                     </div>
+                    {selectedIssue.photo?.url && (
+                      <img
+                        src={selectedIssue.photo.url}
+                        alt={getIssueTitle(selectedIssue)}
+                        className="w-full h-28 object-cover rounded-xl mb-2 border border-slate-100"
+                      />
+                    )}
                     <p className="font-bold text-slate-900 text-sm mb-1">{getIssueTitle(selectedIssue)}</p>
                     <p className="text-xs text-slate-500 mb-3 leading-relaxed">
                       {selectedIssue.description}
                       {selectedIssue.location?.address ? ` • ${selectedIssue.location.address}` : ''}
                       {' • Reported '}{timeAgo(selectedIssue.createdAt)}.
                     </p>
-                    <button 
-                      onClick={() => alert(`Showing report details for ${getIssueTitle(selectedIssue)}`)}
-                      className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-all"
-                    >
-                      View Details
-                    </button>
+                    <div className="flex items-center justify-between text-[10px] font-bold pt-2 border-t border-slate-100">
+                      <span className="text-slate-500">{selectedIssue.department}</span>
+                      <span className={`px-2 py-0.5 rounded-full uppercase ${
+                        selectedIssue.priority === 'High' ? 'bg-rose-50 text-rose-700'
+                        : selectedIssue.priority === 'Medium' ? 'bg-amber-50 text-amber-700'
+                        : 'bg-emerald-50 text-emerald-700'
+                      }`}>
+                        {selectedIssue.priority} Priority
+                      </span>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -307,54 +324,62 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
             {/* Right Column: AI Insight & Activity Feed */}
             <div className="lg:col-span-4 flex flex-col gap-6 h-full">
               
-              {/* AI Insight Card */}
+              {/* AI Insight Card — computed from the real nearby reports pulled from the backend */}
               <div className="bg-white border border-teal-100 p-6 rounded-3xl shadow-sm flex flex-col relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-teal-50 rounded-full blur-2xl pointer-events-none" />
                 <div className="flex items-center gap-2 mb-4 relative z-10">
                   <Sparkles className="w-5 h-5 text-teal-600" />
-                  <h3 className="font-bold text-xs uppercase tracking-wider text-teal-800">AI Neighborhood Insight</h3>
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-teal-800">Neighborhood Insight</h3>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed mb-4 relative z-10 font-medium">
-                  "Reported issues in your area have decreased by 15% this month. Lighting improvements on Oak Ave have significantly improved perceived safety."
+                  {issuesLoading && 'Crunching nearby reports...'}
+                  {!issuesLoading && !neighborhoodInsight && `No reports within ${SEARCH_RADIUS_KM}km yet — be the first to file one.`}
+                  {!issuesLoading && neighborhoodInsight && (
+                    <>
+                      {neighborhoodInsight.total} report{neighborhoodInsight.total === 1 ? '' : 's'} within {SEARCH_RADIUS_KM}km,{' '}
+                      {neighborhoodInsight.resolvedCount} already resolved.
+                      {neighborhoodInsight.topLabel && ` The most common issue nearby is ${neighborhoodInsight.topLabel.toLowerCase()}.`}
+                    </>
+                  )}
                 </p>
-                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] relative z-10">
-                  <span className="text-slate-400 font-semibold">Data verified by CivicPulse</span>
-                  <button 
-                    onClick={() => alert("Full district AI report is dispatched to registered voters.")}
-                    className="text-teal-600 font-bold hover:underline cursor-pointer"
-                  >
-                    Full Report
-                  </button>
+                <div className="mt-auto pt-4 border-t border-slate-100 text-[11px] relative z-10">
+                  <span className="text-slate-400 font-semibold">Live from CivicPulse reports</span>
                 </div>
               </div>
 
-              {/* Recently Resolved Feed */}
+              {/* Recently Resolved Feed — real resolved issues from the backend */}
               <div className="bg-white border border-[#c6c6cd]/50 rounded-3xl p-6 shadow-sm flex flex-col flex-grow">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-bold text-base text-slate-950">Recently Resolved</h3>
-                  <button 
-                    onClick={() => alert("All completed municipal requests are archived in public records.")}
-                    className="text-slate-400 hover:text-black font-bold text-xs"
-                  >
-                    View All
-                  </button>
                 </div>
 
                 <div className="space-y-6">
-                  {resolvedItems.map((item) => (
-                    <div key={item.id} className="flex gap-4 items-start text-left">
-                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 flex-shrink-0 shadow-sm border border-slate-150">
-                        <img className="w-full h-full object-cover" src={item.image} alt={item.title} />
+                  {statsLoading && (
+                    <p className="text-xs text-slate-400">Loading recent activity...</p>
+                  )}
+                  {!statsLoading && portalStats.recentlyResolved.length === 0 && (
+                    <p className="text-xs text-slate-400">No resolved reports yet.</p>
+                  )}
+                  {!statsLoading && portalStats.recentlyResolved.map((item) => (
+                    <div key={item._id} className="flex gap-4 items-start text-left">
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-teal-50 flex-shrink-0 shadow-sm border border-slate-150 flex items-center justify-center">
+                        {item.photo?.url ? (
+                          <img className="w-full h-full object-cover" src={item.photo.url} alt={getIssueTitle(item)} />
+                        ) : (
+                          <CheckCircle2 className="w-6 h-6 text-teal-600" />
+                        )}
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="text-[9px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full uppercase">
                             Fixed
                           </span>
-                          <span className="text-[10px] text-slate-400 font-semibold">{item.time}</span>
+                          <span className="text-[10px] text-slate-400 font-semibold">{timeAgo(item.updatedAt)}</span>
                         </div>
-                        <h4 className="font-bold text-xs text-slate-900 leading-tight">{item.title}</h4>
-                        <p className="text-[11px] text-slate-500 leading-normal">{item.description}</p>
+                        <h4 className="font-bold text-xs text-slate-900 leading-tight">{getIssueTitle(item)}</h4>
+                        <p className="text-[11px] text-slate-500 leading-normal">
+                          {item.location?.address || item.description}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -396,13 +421,14 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
       <IssueWizardModal 
         isOpen={isWizardOpen}
         onClose={() => setIsWizardOpen(false)}
+        defaultCenter={location}
         onIssueCreated={(newIssue) => {
-          // NOTE: the wizard still mocks AI categorization and coordinates
-          // client-side (it doesn't POST to /api/v1/issues yet), so it has
-          // no real lat/lng and can't be plotted on the live map. It's kept
-          // here for the existing local-history UI only. Wiring the wizard
-          // to the real create-issue endpoint is a good next step.
-          onAddIssue(newIssue);
+          // Real issue from the backend (with real lat/lng + AI-assigned
+          // category/department/priority) — drop it straight onto the live
+          // map alongside the nearby reports already being shown.
+          setLiveIssues((prev) => [newIssue, ...prev]);
+          setSelectedIssue(newIssue);
+          onAddIssue?.(newIssue);
         }}
       />
 

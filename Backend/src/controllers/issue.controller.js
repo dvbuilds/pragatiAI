@@ -70,6 +70,21 @@ export const getIssue = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, issue, 'Issue fetched'));
 });
 
+// Powers the Public Portal's "Recently Resolved" feed and the "Issues
+// Fixed This Week" badge — both used to be hardcoded on the frontend.
+export const getPortalStats = asyncHandler(async (req, res) => {
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  const [resolvedThisWeek, recentlyResolved] = await Promise.all([
+    Issue.countDocuments({ status: 'resolved', updatedAt: { $gte: sevenDaysAgo } }),
+    Issue.find({ status: 'resolved' }).sort({ updatedAt: -1 }).limit(5),
+  ]);
+
+  res.status(200).json(
+    new ApiResponse(200, { resolvedThisWeek, recentlyResolved }, 'Portal stats fetched')
+  );
+});
+
 export const updateIssueStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   if (!['active', 'in_review', 'resolved'].includes(status)) {

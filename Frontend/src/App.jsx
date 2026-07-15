@@ -72,60 +72,12 @@ export default function App() {
     }
   ]);
 
-  // Global Map Issues State
-  const [issues, setIssues] = useState([
-    {
-      id: 'marker-pothole',
-      title: 'Main St. Pothole',
-      description: 'Deep road fissure reported near lane dividing marker. Damaging tires.',
-      status: 'active',
-      type: 'pothole',
-      top: '58%',
-      left: '42%',
-      timeReported: '2 hours ago'
-    },
-    {
-      id: 'marker-lighting',
-      title: 'Lighting Resolved: Oak Ave',
-      description: 'Replaced flickering bulb and sensor unit at intersection streetlight.',
-      status: 'resolved',
-      type: 'lighting',
-      top: '42%',
-      left: '66%',
-      timeReported: 'Yesterday'
-    },
-    {
-      id: 'marker-utilities',
-      title: 'Utilities: Power Substation Overload',
-      description: 'Substation failure in progress. Electrical technicians actively rerouting local grids.',
-      status: 'active',
-      type: 'lighting',
-      top: '28%',
-      left: '28%',
-      timeReported: 'Just now'
-    },
-    {
-      id: 'marker-trash',
-      title: 'Sanitation: Trash Overflow',
-      description: 'Unscheduled overflow reported at central greenway waste collection bin.',
-      status: 'active',
-      type: 'sanitation',
-      top: '72%',
-      left: '54%',
-      timeReported: '3 hours ago'
-    }
-  ]);
-
   const handleAddRequest = (newReq) => {
     setRequests(prev => [newReq, ...prev]);
   };
 
   const handleUpdateRequest = (id, updated) => {
     setRequests(prev => prev.map(req => req.id === id ? { ...req, ...updated } : req));
-  };
-
-  const handleAddIssue = (newIssue) => {
-    setIssues(prev => [newIssue, ...prev]);
   };
 
   const handleAssistantAddRequest = (title, type) => {
@@ -179,8 +131,6 @@ export default function App() {
               onNavigate={handleNavigate}
               onLogout={handleLogout}
               currentUser={user}
-              issues={issues}
-              onAddIssue={handleAddIssue}
             />
           )}
 

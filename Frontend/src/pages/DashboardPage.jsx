@@ -54,8 +54,10 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
   // File upload state for property tax "Missing Info" correction
   const [exemptionUploading, setExemptionUploading] = useState(false);
 
-  // Profile image hotlinked from HTML
-  const alexAvatar = "https://lh3.googleusercontent.com/aida-public/AB6AXuAslx00ZDXEeuyGt5P3zUS0AVLlEfeM0L6tiYHlI1FcTb3U6wjSihKCmJ5YfZpdOzqlaSxWOvwGUBUB36RQDc27t_3jL1A1Wk_7OWXTcdOA3_DBKGdPFPQudsqBsa0Ht730tiIv7sO8LrNVoSAMLLme_ipwMEYaWY2uVyDmqnlQeFOriaDuAA5CV0gr666jJri6W8itzhC0eIHlf8MQCui_NJkLfCL7G0nhE2ddT8_WXJWle-aowvKkjw";
+  // First name for the greeting, and a short one/two-word location for the
+  // header — both derived from the real logged-in user, not hardcoded.
+  const firstName = currentUser?.fullName?.trim().split(/\s+/)[0] || 'there';
+  const shortLocation = currentUser?.profile?.state?.trim() || 'Your Area';
 
   // Events list hotlinked from HTML
   const events = [

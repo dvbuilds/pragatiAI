@@ -22,6 +22,43 @@ export async function fetchIssues({ near, radiusKm, status, type } = {}) {
   return data?.data ?? [];
 }
 
+/**
+ * Submits a new civic issue report to the backend. The server does the
+ * real AI categorization (Groq) and geocoding is already resolved
+ * client-side via the Leaflet location picker before this is called.
+ *
+ * @param {Object} params
+ * @param {string} params.description
+ * @param {number} params.lat
+ * @param {number} params.lng
+ * @param {string=} params.address
+ * @param {File=} params.photo
+ */
+export async function createIssue({ description, lat, lng, address, photo }) {
+  const formData = new FormData();
+  formData.append('description', description);
+  formData.append('lat', lat);
+  formData.append('lng', lng);
+  if (address) formData.append('address', address);
+  if (photo) formData.append('photo', photo);
+
+  // Let the browser set the multipart boundary itself — the shared axios
+  // instance defaults to 'application/json', so that has to be cleared here.
+  const { data } = await api.post('/issues', formData, {
+    headers: { 'Content-Type': undefined },
+  });
+  return data?.data;
+}
+
+/**
+ * Real stats for the Public Portal — resolved-this-week count and the
+ * most recently resolved issues, replacing what used to be hardcoded.
+ */
+export async function fetchPortalStats() {
+  const { data } = await api.get('/issues/stats');
+  return data?.data ?? { resolvedThisWeek: 0, recentlyResolved: [] };
+}
+
 /** Human-friendly labels used both for map pins and the detail panel. */
 export const ISSUE_TYPE_LABELS = {
   pothole: 'Pothole Report',
