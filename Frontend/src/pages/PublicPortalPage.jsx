@@ -1,25 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Search, AlertCircle, CheckCircle, Sparkles, Plus, 
-  Info, Zap, Trash2, Share2, Globe
+  Search, Sparkles, Plus, 
+  Info, Share2, Globe, MapPin, RefreshCw
 } from 'lucide-react';
 import IssueWizardModal from '../components/IssueWizardModal';
 import Sidebar from '../components/Sidebar';
+import CivicMap from '../components/CivicMap';
+import useGeolocation from '../hooks/useGeolocation';
+import { fetchIssues, getIssueTitle, timeAgo } from '../lib/issueService';
+
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const SEARCH_RADIUS_KM = 10;
 
 export default function PublicPortalPage({ onNavigate, onLogout, currentUser, issues, onAddIssue }) {
-  const [selectedIssue, setSelectedIssue] = useState(issues[0] || null);
+  const [selectedIssue, setSelectedIssue] = useState(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [mapSearch, setMapSearch] = useState('');
   
   // Category filters
   const [activeFilter, setActiveFilter] = useState('all');
 
+  // Real nearby reports pulled from the backend, centered on the user's
+  // current browser location.
+  const { location, status: geoStatus, error: geoError, isDefault, refresh: refreshLocation } = useGeolocation();
+  const [liveIssues, setLiveIssues] = useState([]);
+  const [issuesLoading, setIssuesLoading] = useState(true);
+  const [issuesError, setIssuesError] = useState(null);
+
+  const loadNearbyIssues = useCallback(async () => {
+    setIssuesLoading(true);
+    setIssuesError(null);
+    try {
+      const data = await fetchIssues({ near: location, radiusKm: SEARCH_RADIUS_KM });
+      setLiveIssues(data);
+    } catch (err) {
+      setIssuesError(
+        err?.response?.data?.message || 'Could not load nearby reports. Is the backend running?'
+      );
+    } finally {
+      setIssuesLoading(false);
+    }
+  }, [location]);
+
+  // Wait until geolocation has resolved (success/denied/error/unsupported)
+  // before querying "nearby", so we don't fetch around (0,0) then refetch.
+  useEffect(() => {
+    if (geoStatus === 'idle' || geoStatus === 'locating') return;
+    loadNearbyIssues();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoStatus, location.lat, location.lng]);
+
   // Portrait image hotlinked from HTML
   const alexPortrait = "https://lh3.googleusercontent.com/aida-public/AB6AXuBWqINPv6Z2M91XrcOVuPpgtGz0DE4osfPZKXFFxZNNkK7sS6njt9U7G-9thun3jnJvGfCeAmvEoIkzh1NTNuhqe3dE_5CBFviULIHA7qxBHxixsVGaDLSFIFqFcp9fAUJx-jZM4gfmzMcLwlZV5HWjgys1vas_FOJMb2-smcCEuoMdzV5H2uvSVjLU1MNpL5fU13jbgak18j78YUvmPulvhZ23gkBaKBeesYLn7omGk6LTaeYoBV9xBQ";
-
-  // Map aerial image hotlinked from HTML
-  const mapImage = "https://lh3.googleusercontent.com/aida-public/AB6AXuDqprU5sIXzx4mO1EaKui8FTDpgpb9V0nz42hAJ8PaD1COx4kqf9ursfJBeBm41wFP_j6iEUhj71mC9gazfYoYSfhGHGUGfttQ1U0Ijqp1agrRKiSEj17IlFGOkkHuMNcV2FAMylB5EfcPOYco0_zFDvsuqlNzp8M0MpFjlKZt_dBsfANxb0CSNfjWr7sjtJxQw1haOoaffUb2AhM1S8qV_hJycm3bZRGkAQxYDsszDwpRSHMgnLyL9PQ";
 
   // Recently Resolved Feed images hotlinked from HTML
   const resolvedItems = [
@@ -46,18 +79,26 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
     }
   ];
 
-  // Filter issues based on select category
-  const filteredIssues = issues.filter(issue => {
-    // Search query match
-    const matchesSearch = mapSearch === '' || 
-      issue.title.toLowerCase().includes(mapSearch.toLowerCase()) || 
-      issue.description.toLowerCase().includes(mapSearch.toLowerCase());
+  // Filter live issues based on the search box + category pills
+  const filteredIssues = useMemo(() => {
+    return liveIssues.filter((issue) => {
+      const haystack = `${getIssueTitle(issue)} ${issue.description || ''} ${issue.location?.address || ''}`.toLowerCase();
+      const matchesSearch = mapSearch === '' || haystack.includes(mapSearch.toLowerCase());
+      const matchesCategory = activeFilter === 'all' || issue.type === activeFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [liveIssues, mapSearch, activeFilter]);
 
-    // Category filter match
-    const matchesCategory = activeFilter === 'all' || issue.type === activeFilter;
-
-    return matchesSearch && matchesCategory;
-  });
+  // Keep a sensible default selection once reports load in
+  useEffect(() => {
+    if (!selectedIssue && filteredIssues.length > 0) {
+      setSelectedIssue(filteredIssues[0]);
+    }
+    if (selectedIssue && !filteredIssues.some((i) => i._id === selectedIssue._id)) {
+      setSelectedIssue(filteredIssues[0] || null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredIssues]);
 
   const handleSidebarNavigate = (key) => {
     if (key === 'report') {
@@ -182,53 +223,59 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
                     Sanitation
                   </button>
                 </div>
+
+                {/* Location / fetch status banner */}
+                {(geoStatus === 'locating' || isDefault || issuesError) && (
+                  <div className="bg-white/90 backdrop-blur-md px-3 py-2 rounded-xl shadow-md border border-slate-200 flex items-center gap-2 text-[10px] font-semibold text-slate-600">
+                    <MapPin className="w-3.5 h-3.5 text-teal-700 flex-shrink-0" />
+                    {geoStatus === 'locating' && <span>Finding your location...</span>}
+                    {geoStatus !== 'locating' && isDefault && !issuesError && (
+                      <span>{geoError || 'Showing Kolkata (default location).'}</span>
+                    )}
+                    {issuesError && <span className="text-rose-600">{issuesError}</span>}
+                    {(geoStatus === 'denied' || geoStatus === 'error' || issuesError) && (
+                      <button
+                        onClick={geoStatus === 'denied' || geoStatus === 'error' ? refreshLocation : loadNearbyIssues}
+                        className="ml-auto flex items-center gap-1 text-teal-700 hover:underline flex-shrink-0"
+                      >
+                        <RefreshCw className="w-3 h-3" /> Retry
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Integrated Map Element */}
-              <div className="w-full h-full bg-[#e6e8ea] flex items-center justify-center relative select-none">
-                <div className="absolute inset-0 grayscale-[0.2] opacity-85">
-                  <img className="w-full h-full object-cover" src={mapImage} alt="Detailed Civic Neighborhood Map" />
-                </div>
+              {/* Real Google Map */}
+              <div className="w-full h-full relative select-none">
+                <CivicMap
+                  apiKey={GOOGLE_MAPS_API_KEY}
+                  center={location}
+                  userLocation={!isDefault ? location : null}
+                  issues={filteredIssues}
+                  selectedIssue={selectedIssue}
+                  onSelectIssue={setSelectedIssue}
+                  onRecenter={refreshLocation}
+                />
 
-                {/* Pin Overlays */}
-                {filteredIssues.map((marker) => {
-                  const isActive = selectedIssue?.id === marker.id;
-                  return (
-                    <button
-                      key={marker.id}
-                      onClick={() => setSelectedIssue(marker)}
-                      style={{ top: marker.top, left: marker.left }}
-                      className={`absolute w-8 h-8 -mt-4 -ml-4 rounded-full flex items-center justify-center shadow-xl border-4 border-white transition-all duration-300 ${
-                        isActive ? 'scale-125 z-30' : 'scale-100 z-20 opacity-90'
-                      } ${
-                        marker.status === 'resolved' 
-                          ? 'bg-emerald-600 text-white' 
-                          : marker.type === 'pothole'
-                          ? 'bg-amber-600 text-white'
-                          : marker.type === 'lighting'
-                          ? 'bg-teal-700 text-white'
-                          : 'bg-rose-600 text-white'
-                      }`}
-                    >
-                      {marker.status === 'resolved' ? (
-                        <CheckCircle className="w-3.5 h-3.5" />
-                      ) : marker.type === 'pothole' ? (
-                        <AlertCircle className="w-3.5 h-3.5" />
-                      ) : marker.type === 'lighting' ? (
-                        <Zap className="w-3.5 h-3.5" />
-                      ) : (
-                        <Trash2 className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  );
-                })}
+                {issuesLoading && (
+                  <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-slate-200 flex items-center gap-2 text-[10px] font-bold text-slate-600">
+                    <span className="w-3 h-3 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
+                    Loading nearby reports...
+                  </div>
+                )}
+
+                {!issuesLoading && !issuesError && filteredIssues.length === 0 && (
+                  <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-slate-200 text-[10px] font-bold text-slate-500">
+                    No reports found within {SEARCH_RADIUS_KM}km
+                  </div>
+                )}
               </div>
 
               {/* Active Issue display overlay bottom right */}
               <AnimatePresence mode="wait">
                 {selectedIssue && (
                   <motion.div 
-                    key={selectedIssue.id}
+                    key={selectedIssue._id}
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 15 }}
@@ -240,12 +287,14 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
                         {selectedIssue.status === 'resolved' ? 'Resolved Issue' : 'Active Issue'}
                       </span>
                     </div>
-                    <p className="font-bold text-slate-900 text-sm mb-1">{selectedIssue.title}</p>
+                    <p className="font-bold text-slate-900 text-sm mb-1">{getIssueTitle(selectedIssue)}</p>
                     <p className="text-xs text-slate-500 mb-3 leading-relaxed">
-                      {selectedIssue.description} • Reported {selectedIssue.timeReported}.
+                      {selectedIssue.description}
+                      {selectedIssue.location?.address ? ` • ${selectedIssue.location.address}` : ''}
+                      {' • Reported '}{timeAgo(selectedIssue.createdAt)}.
                     </p>
                     <button 
-                      onClick={() => alert(`Showing report details for ${selectedIssue.title}`)}
+                      onClick={() => alert(`Showing report details for ${getIssueTitle(selectedIssue)}`)}
                       className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-all"
                     >
                       View Details
@@ -348,8 +397,12 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser, is
         isOpen={isWizardOpen}
         onClose={() => setIsWizardOpen(false)}
         onIssueCreated={(newIssue) => {
+          // NOTE: the wizard still mocks AI categorization and coordinates
+          // client-side (it doesn't POST to /api/v1/issues yet), so it has
+          // no real lat/lng and can't be plotted on the live map. It's kept
+          // here for the existing local-history UI only. Wiring the wizard
+          // to the real create-issue endpoint is a good next step.
           onAddIssue(newIssue);
-          setSelectedIssue(newIssue);
         }}
       />
 
