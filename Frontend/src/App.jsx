@@ -13,20 +13,41 @@ import Register from './pages/Register';
 import { useAuth } from './context/AuthContext';
 
 const PROTECTED_TABS = ['dashboard', 'portal', 'assistant', 'settings', 'documents', 'schemes', 'complaints'];
+const ACTIVE_TAB_KEY = 'cp_active_tab';
+
+// Reads whatever tab the user was last on so a refresh (F5) reopens the
+// same page instead of bouncing back to the landing page.
+function getInitialTab() {
+  try {
+    return sessionStorage.getItem(ACTIVE_TAB_KEY) || 'landing';
+  } catch {
+    return 'landing';
+  }
+}
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('landing');
+  const [activeTab, setActiveTab] = useState(getInitialTab);
   const { user, authChecked, logout, checkAuth } = useAuth();
 
+  // Keep sessionStorage in sync so a refresh always reopens on this tab.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(ACTIVE_TAB_KEY, activeTab);
+    } catch {
+      // sessionStorage can be unavailable (privacy mode, etc.) — fine to skip
+    }
+  }, [activeTab]);
+
   // Route guard: once we know whether there's a session, bounce
-  // unauthenticated visitors away from protected tabs, and skip signed-in
-  // users past the login/register screens straight to their dashboard.
+  // unauthenticated visitors away from protected tabs, and send signed-in
+  // users straight to their dashboard instead of the landing/login/register
+  // screens (whether that's on first load or after a refresh).
   useEffect(() => {
     if (!authChecked) return;
     if (!user && PROTECTED_TABS.includes(activeTab)) {
       setActiveTab('login');
     }
-    if (user && (activeTab === 'login' || activeTab === 'register')) {
+    if (user && (activeTab === 'landing' || activeTab === 'login' || activeTab === 'register')) {
       setActiveTab('dashboard');
     }
   }, [authChecked, user, activeTab]);
@@ -76,10 +97,6 @@ export default function App() {
     setRequests(prev => [newReq, ...prev]);
   };
 
-  const handleUpdateRequest = (id, updated) => {
-    setRequests(prev => prev.map(req => req.id === id ? { ...req, ...updated } : req));
-  };
-
   const handleAssistantAddRequest = (title, type) => {
     const newReq = {
       id: `req-asst-${Date.now()}`,
@@ -94,6 +111,11 @@ export default function App() {
 
   return (
     <div id="app-root" className="min-h-screen bg-[#f7f9fb] text-[#191c1e] font-sans overflow-x-hidden">
+      {!authChecked ? (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-teal-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
@@ -120,9 +142,6 @@ export default function App() {
               onNavigate={handleNavigate} 
               onLogout={handleLogout}
               currentUser={user}
-              requests={requests}
-              onAddRequest={handleAddRequest}
-              onUpdateRequest={handleUpdateRequest}
             />
           )}
 
@@ -177,6 +196,7 @@ export default function App() {
           )}
         </motion.div>
       </AnimatePresence>
+      )}
     </div>
   );
 }

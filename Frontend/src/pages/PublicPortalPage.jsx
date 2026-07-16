@@ -114,7 +114,7 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
   };
 
   return (
-    <div className="bg-[#f7f9fb] text-[#191c1e] min-h-screen flex font-sans">
+    <div className="bg-[#f7f9fb] text-[#191c1e] h-screen overflow-hidden flex font-sans">
       
       <Sidebar 
         activeTab="portal" 
@@ -123,7 +123,7 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
         currentUser={currentUser} 
       />
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto">
 
         {/* TopAppBar */}
         <header className="bg-white border-b border-[#c6c6cd]/50 sticky top-0 z-40 shadow-sm">
@@ -428,7 +428,6 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
           // map alongside the nearby reports already being shown.
           setLiveIssues((prev) => [newIssue, ...prev]);
           setSelectedIssue(newIssue);
-          onAddIssue?.(newIssue);
         }}
       />
 

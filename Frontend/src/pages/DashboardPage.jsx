@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, Search, Bell, ChevronRight, Sparkles, ArrowRight, ChevronLeft, Calendar, 
@@ -7,10 +7,36 @@ import {
 import IssueWizardModal from '../components/IssueWizardModal';
 import Sidebar from '../components/Sidebar';
 import api from '../lib/api';
+import { fetchIssues, getIssueTitle, getStatusMeta, timeAgo } from '../lib/issueService';
 
-export default function DashboardPage({ onNavigate, requests, onAddRequest, onUpdateRequest, currentUser, onLogout }) {
+const REQUEST_PREVIEW_COUNT = 4;
+
+export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAllRequests, setShowAllRequests] = useState(false);
+
+  // The citizen's own reported issues — real data from the backend
+  // (?mine=true), replacing the old hardcoded "Parking Permit" /
+  // "Tax Exemption" / "Bin Replacement" mock array.
+  const [myIssues, setMyIssues] = useState([]);
+  const [issuesLoading, setIssuesLoading] = useState(true);
+  const [issuesError, setIssuesError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setIssuesLoading(true);
+    fetchIssues({ mine: true })
+      .then((data) => { if (!cancelled) setMyIssues(data); })
+      .catch((err) => { if (!cancelled) setIssuesError(err?.response?.data?.message || 'Could not load your requests.'); })
+      .finally(() => { if (!cancelled) setIssuesLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const visibleRequests = useMemo(
+    () => (showAllRequests ? myIssues : myIssues.slice(0, REQUEST_PREVIEW_COUNT)),
+    [myIssues, showAllRequests]
+  );
 
   // AI-matched government scheme recommendations (real backend call, replaces
   // the old hardcoded "Community Garden" / "E-Waste" cards)
@@ -50,9 +76,6 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
   
   // Active detail modal for service requests
   const [selectedRequest, setSelectedRequest] = useState(null);
-
-  // File upload state for property tax "Missing Info" correction
-  const [exemptionUploading, setExemptionUploading] = useState(false);
 
   // First name for the greeting, and a short one/two-word location for the
   // header — both derived from the real logged-in user, not hardcoded.
@@ -96,19 +119,6 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
     }
   ];
 
-  const handleFixTaxExemption = () => {
-    setExemptionUploading(true);
-    setTimeout(() => {
-      onUpdateRequest(selectedRequest.id, {
-        status: "In Review",
-        description: "Income verification document uploaded. Verification in progress."
-      });
-      setExemptionUploading(false);
-      setSelectedRequest(null);
-      alert("Document uploaded! Status has been updated to 'In Review'.");
-    }, 1500);
-  };
-
   const markAllNotificationsRead = () => {
     setNotifications(notifications.map(n => ({ ...n, read: true })));
   };
@@ -131,7 +141,7 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
   };
 
   return (
-    <div className="bg-[#f7f9fb] text-[#191c1e] min-h-screen flex font-sans">
+    <div className="bg-[#f7f9fb] text-[#191c1e] h-screen overflow-hidden flex font-sans">
       
       <Sidebar 
         activeTab="dashboard" 
@@ -141,7 +151,7 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-h-screen">
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto">
         
         {/* TopAppBar Component */}
         <header className="flex justify-between items-center w-full px-6 md:px-12 h-16 border-b border-[#c6c6cd]/40 bg-white sticky top-0 z-40 shadow-sm">
@@ -152,7 +162,7 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
           </div>
           
           <div className="hidden lg:block text-slate-500 text-xs font-medium">
-            Citizen Dashboard • <span className="text-black font-bold">District 4</span>
+            Citizen Dashboard • <span className="text-black font-bold">{shortLocation}</span>
           </div>
           
           <div className="flex items-center gap-6">
@@ -228,7 +238,7 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
         <section className="p-6 md:p-12 max-w-7xl w-full mx-auto flex-grow space-y-10">
           
           <div className="space-y-1">
-            <h1 className="font-bold text-3xl tracking-tight text-slate-950">Hello, Alex</h1>
+            <h1 className="font-bold text-3xl tracking-tight text-slate-950">Hello, {firstName}</h1>
             <p className="text-slate-500 text-sm">Here's what's happening with your city services today.</p>
           </div>
 
@@ -240,50 +250,67 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="font-bold text-lg text-slate-950">At a Glance</h2>
-                  <button 
-                    onClick={() => onNavigate('assistant')}
-                    className="text-teal-600 font-semibold text-xs hover:underline cursor-pointer"
-                  >
-                    View All Requests
-                  </button>
+                  {myIssues.length > REQUEST_PREVIEW_COUNT && (
+                    <button 
+                      onClick={() => setShowAllRequests((v) => !v)}
+                      className="text-teal-600 font-semibold text-xs hover:underline cursor-pointer"
+                    >
+                      {showAllRequests ? 'Show Less' : 'View All Requests'}
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-4">
-                  {requests.map((req) => (
-                    <div 
-                      key={req.id} 
-                      onClick={() => setSelectedRequest(req)}
-                      className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          req.type === 'parking' 
-                            ? 'bg-[#d5e3fd] text-[#0d1c2f]' 
-                            : req.type === 'tax'
-                            ? 'bg-teal-50 text-teal-700'
-                            : 'bg-slate-200 text-slate-600'
-                        }`}>
-                          {req.type === 'parking' ? '🅿' : req.type === 'tax' ? '📄' : '⚙'}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-slate-900 text-sm">{req.title}</h4>
-                          <p className="text-xs text-slate-400">ID: {req.id} • Submitted {req.dateSubmitted}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          req.status === 'In Review' 
-                            ? 'bg-[#b9c7e0]/30 text-[#0d1c2f]' 
-                            : req.status === 'Missing Info'
-                            ? 'bg-rose-100 text-rose-700 border border-rose-200 animate-pulse'
-                            : 'bg-emerald-50 text-emerald-700'
-                        }`}>
-                          {req.status}
-                        </span>
-                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-black group-hover:translate-x-0.5 transition-all" />
-                      </div>
+                  {issuesLoading && (
+                    <div className="flex items-center justify-center gap-2 py-8 text-slate-400">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-xs">Loading your requests...</span>
                     </div>
-                  ))}
+                  )}
+                  {!issuesLoading && issuesError && (
+                    <p className="text-xs text-rose-600 py-4">{issuesError}</p>
+                  )}
+                  {!issuesLoading && !issuesError && myIssues.length === 0 && (
+                    <p className="text-xs text-slate-400 py-8 text-center">
+                      You haven't reported any issues yet. Click "New Request" to file one.
+                    </p>
+                  )}
+                  {!issuesLoading && visibleRequests.map((issue) => {
+                    const statusMeta = getStatusMeta(issue.status);
+                    return (
+                      <div 
+                        key={issue._id} 
+                        onClick={() => setSelectedRequest(issue)}
+                        className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            issue.type === 'pothole' 
+                              ? 'bg-[#d5e3fd] text-[#0d1c2f]' 
+                              : issue.type === 'lighting'
+                              ? 'bg-amber-50 text-amber-700'
+                              : issue.type === 'sanitation'
+                              ? 'bg-teal-50 text-teal-700'
+                              : 'bg-slate-200 text-slate-600'
+                          }`}>
+                            {issue.type === 'pothole' ? '🕳' : issue.type === 'lighting' ? '💡' : issue.type === 'sanitation' ? '🗑' : '⚙'}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-slate-900 text-sm">{getIssueTitle(issue)}</h4>
+                            <p className="text-xs text-slate-400">
+                              {issue.location?.address ? `${issue.location.address} • ` : ''}Submitted {timeAgo(issue.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${statusMeta.className}`}>
+                            {statusMeta.label}
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-black group-hover:translate-x-0.5 transition-all" />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -391,7 +418,7 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Request Details</span>
-                  <h3 className="font-bold text-lg text-slate-900 mt-1">{selectedRequest.title}</h3>
+                  <h3 className="font-bold text-lg text-slate-900 mt-1">{getIssueTitle(selectedRequest)}</h3>
                 </div>
                 <button 
                   onClick={() => setSelectedRequest(null)}
@@ -402,63 +429,47 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
               </div>
 
               <div className="space-y-4">
+                {selectedRequest.photo?.url && (
+                  <img
+                    src={selectedRequest.photo.url}
+                    alt={getIssueTitle(selectedRequest)}
+                    className="w-full h-32 object-cover rounded-2xl border border-slate-100"
+                  />
+                )}
+
                 <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-2xl">
                   <div>
-                    <span className="text-slate-400 block font-semibold">Submission Date</span>
-                    <span className="font-bold text-slate-800">{selectedRequest.dateSubmitted}</span>
+                    <span className="text-slate-400 block font-semibold">Submitted</span>
+                    <span className="font-bold text-slate-800">{timeAgo(selectedRequest.createdAt)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block font-semibold">Request ID</span>
-                    <span className="font-mono text-slate-800 font-bold">{selectedRequest.id}</span>
+                    <span className="text-slate-400 block font-semibold">Department</span>
+                    <span className="font-bold text-slate-800">{selectedRequest.department}</span>
                   </div>
                 </div>
 
                 <div>
                   <span className="text-xs text-slate-400 block font-semibold">Active Status</span>
                   <div className="flex items-center gap-2 mt-1.5">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                      selectedRequest.status === 'In Review' 
-                        ? 'bg-slate-100 text-slate-800' 
-                        : selectedRequest.status === 'Missing Info'
-                        ? 'bg-rose-50 text-rose-700 border border-rose-100'
-                        : 'bg-emerald-50 text-emerald-700'
-                    }`}>
-                      {selectedRequest.status === 'Missing Info' ? <AlertCircle className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                      <span>{selectedRequest.status}</span>
-                    </span>
+                    {(() => {
+                      const statusMeta = getStatusMeta(selectedRequest.status);
+                      return (
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${statusMeta.className}`}>
+                          {selectedRequest.status === 'resolved' ? <CheckCircle className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                          <span>{statusMeta.label}</span>
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-400 block font-semibold">Status Report &amp; Notes</span>
+                  <span className="text-xs text-slate-400 block font-semibold">Description</span>
                   <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                    {selectedRequest.description || "The municipal board has initiated preliminary document verification. No action is required at this time."}
+                    {selectedRequest.description}
+                    {selectedRequest.location?.address ? ` (${selectedRequest.location.address})` : ''}
                   </p>
                 </div>
-
-                {/* Handle Missing Info correction workflow */}
-                {selectedRequest.status === 'Missing Info' && (
-                  <div className="border-t border-slate-100 pt-4 mt-6">
-                    <div className="p-4 bg-rose-50/50 border border-rose-100 rounded-2xl text-xs space-y-3">
-                      <p className="font-semibold text-rose-950">Missing Form: Income Verification Statement</p>
-                      <p className="text-rose-800">
-                        Please upload your tax filing document to qualify for the 2026 property tax relief program.
-                      </p>
-                      
-                      <button 
-                        onClick={handleFixTaxExemption}
-                        disabled={exemptionUploading}
-                        className="w-full py-2.5 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
-                      >
-                        {exemptionUploading ? (
-                          <span className="w-4 h-4 border-2 border-white rounded-full border-t-transparent animate-spin" />
-                        ) : (
-                          <><span>Upload &amp; Resubmit</span></>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             </motion.div>
           </div>
@@ -512,7 +523,7 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
               <div className="pt-2 flex gap-3">
                 <button 
                   onClick={() => {
-                    alert("Added to calendar! A calendar invitation has been sent to Alex's verified email.");
+                    alert(`Added to calendar! A calendar invitation has been sent to ${firstName}'s verified email.`);
                     setSelectedEvent(null);
                   }}
                   className="flex-grow py-3 bg-black hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-md text-center transition-all cursor-pointer"
@@ -535,17 +546,10 @@ export default function DashboardPage({ onNavigate, requests, onAddRequest, onUp
       <IssueWizardModal 
         isOpen={isWizardOpen} 
         onClose={() => setIsWizardOpen(false)}
-        onIssueCreated={(newMarker) => {
-          // Mock registering issue as a service request as well!
-          const newReq = {
-            id: newMarker.id,
-            title: newMarker.title,
-            status: "In Review",
-            dateSubmitted: "Just now",
-            type: newMarker.type === 'pothole' ? 'permit' : 'other',
-            description: newMarker.description
-          };
-          onAddRequest(newReq);
+        onIssueCreated={(newIssue) => {
+          // Real issue from the backend — persists on refresh (it's fetched
+          // via ?mine=true) and shows up immediately without a refetch.
+          setMyIssues((prev) => [newIssue, ...prev]);
         }}
       />
 

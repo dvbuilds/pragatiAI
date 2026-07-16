@@ -24,7 +24,13 @@ export default function Sidebar({ activeTab, onNavigate, onLogout, currentUser, 
     'https://lh3.googleusercontent.com/aida-public/AB6AXuAslx00ZDXEeuyGt5P3zUS0AVLlEfeM0L6tiYHlI1FcTb3U6wjSihKCmJ5YfZpdOzqlaSxWOvwGUBUB36RQDc27t_3jL1A1Wk_7OWXTcdOA3_DBKGdPFPQudsqBsa0Ht730tiIv7sO8LrNVoSAMLLme_ipwMEYaWY2uVyDmqnlQeFOriaDuAA5CV0gr666jJri6W8itzhC0eIHlf8MQCui_NJkLfCL7G0nhE2ddT8_WXJWle-aowvKkjw';
 
   return (
-    <aside className="hidden lg:flex flex-col h-screen sticky top-0 w-72 flex-shrink-0 bg-[#141414] text-white overflow-hidden">
+    <aside className="hidden lg:flex min-h-screen w-72 flex-shrink-0 bg-[#141414] text-white">
+      {/* Inner layer stays pinned to the viewport (same as before) while the
+          outer <aside> above stretches to match the page's real height —
+          this keeps the dark background from ending early on pages whose
+          content runs taller than one screen (e.g. Government Schemes with
+          many matches, or the Public Portal map + activity feed). */}
+      <div className="sticky top-0 h-screen w-full flex flex-col overflow-hidden">
       {/* Profile block with concentric glow rings, matching the reference */}
       <div className="relative px-8 pt-10 pb-8">
         <div className="absolute -top-10 -left-10 w-56 h-56 rounded-full bg-white/[0.03] pointer-events-none" />
@@ -85,6 +91,7 @@ export default function Sidebar({ activeTab, onNavigate, onLogout, currentUser, 
           <LogOut className="w-5 h-5 shrink-0 text-slate-400" />
           <span className="text-sm font-medium">Sign Out</span>
         </button>
+      </div>
       </div>
     </aside>
   );

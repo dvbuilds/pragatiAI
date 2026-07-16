@@ -75,10 +75,10 @@ export default function Complaint({ onNavigate, onLogout, currentUser }) {
   };
 
   return (
-    <div className="bg-[#f7f9fb] text-[#191c1e] min-h-screen flex font-sans">
+    <div className="bg-[#f7f9fb] text-[#191c1e] h-screen overflow-hidden flex font-sans">
       <Sidebar activeTab="complaints" onNavigate={handleSidebarNavigate} onLogout={onLogout} currentUser={currentUser} />
 
-      <div className="flex-1 min-h-screen">
+      <div className="flex-1 h-screen overflow-y-auto">
         <main className="p-6 md:p-10 max-w-7xl mx-auto w-full">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">

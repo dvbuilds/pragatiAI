@@ -10,13 +10,15 @@ import api from './api';
  * @param {number=} params.radiusKm - search radius in km (default 5 on the backend)
  * @param {string=} params.status - 'active' | 'in_review' | 'resolved'
  * @param {string=} params.type - 'pothole' | 'lighting' | 'sanitation' | 'noise' | 'other'
+ * @param {boolean=} params.mine - only issues reported by the logged-in user
  */
-export async function fetchIssues({ near, radiusKm, status, type } = {}) {
+export async function fetchIssues({ near, radiusKm, status, type, mine } = {}) {
   const params = {};
   if (near) params.near = `${near.lng},${near.lat}`;
   if (radiusKm) params.radiusKm = radiusKm;
   if (status) params.status = status;
   if (type) params.type = type;
+  if (mine) params.mine = 'true';
 
   const { data } = await api.get('/issues', { params });
   return data?.data ?? [];
@@ -70,6 +72,17 @@ export const ISSUE_TYPE_LABELS = {
 
 export function getIssueTitle(issue) {
   return ISSUE_TYPE_LABELS[issue.type] || 'Civic Report';
+}
+
+/** Human-friendly label + Tailwind classes for a real backend issue status. */
+export const ISSUE_STATUS_META = {
+  active: { label: 'Active', className: 'bg-[#b9c7e0]/30 text-[#0d1c2f]' },
+  in_review: { label: 'In Review', className: 'bg-amber-50 text-amber-700 border border-amber-100' },
+  resolved: { label: 'Resolved', className: 'bg-emerald-50 text-emerald-700' },
+};
+
+export function getStatusMeta(status) {
+  return ISSUE_STATUS_META[status] || ISSUE_STATUS_META.active;
 }
 
 /** Turns a Mongo createdAt timestamp into "3 hours ago" style text. */

@@ -75,10 +75,10 @@ export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) 
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] text-slate-900 font-sans flex">
+    <div className="h-screen overflow-hidden bg-[#f7f9fb] text-slate-900 font-sans flex">
       <Sidebar activeTab="schemes" onNavigate={handleSidebarNavigate} onLogout={onLogout} currentUser={currentUser} />
 
-      <div className="flex-1 min-h-screen">
+      <div className="flex-1 h-screen overflow-y-auto">
         <main className="p-6 md:p-10">
           <div className="max-w-[1280px] mx-auto">
             {/* Header */}

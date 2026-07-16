@@ -86,7 +86,7 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] text-[#191c1e] font-sans flex">
+    <div className="h-screen overflow-hidden bg-[#f7f9fb] text-[#191c1e] font-sans flex">
       
       <Sidebar 
         activeTab="settings" 
@@ -95,7 +95,7 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
         currentUser={currentUser} 
       />
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto">
         {/* Header */}
         <header className="w-full h-16 bg-white border-b border-[#c6c6cd]/40 flex items-center px-6 md:px-10 sticky top-0 z-30 shadow-sm">
           <div className="w-full max-w-3xl mx-auto flex items-center justify-between">
