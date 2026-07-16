@@ -14,6 +14,8 @@ import {
 
 const router = Router();
 
+console.log("✅ auth.routes.js loaded");
+
 router.post(
   '/register',
   strictLimiter,
