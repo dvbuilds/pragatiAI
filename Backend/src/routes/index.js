@@ -8,6 +8,8 @@ import assistantRoutes from './assistant.routes.js';
 
 const router = Router();
 
+console.log("✅ routes/index.js loaded");
+
 router.use('/auth', authRoutes);
 router.use('/issues', issueRoutes);
 router.use('/complaints', complaintRoutes);
