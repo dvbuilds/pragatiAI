@@ -7,9 +7,53 @@ const ai = new OpenAI({
 const MODEL = 'llama-3.1-8b-instant';
 
 // Strips markdown code fences some models wrap JSON in, then parses.
+//
+// Small/fast models (llama-3.1-8b-instant especially) frequently emit
+// literal newlines inside JSON string values (e.g. a multi-line email
+// body) instead of escaping them as \n — which is invalid JSON and makes
+// JSON.parse throw "Bad control character in string literal...". We try a
+// plain parse first, and only if that fails, walk the string and escape
+// any raw control character that appears *inside* a JSON string literal,
+// leaving the JSON structure itself untouched, then retry.
+const escapeControlCharsInStrings = (raw) => {
+  let out = '';
+  let inString = false;
+  let escapeNext = false;
+
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+
+    if (escapeNext) {
+      out += ch;
+      escapeNext = false;
+      continue;
+    }
+    if (ch === '\\') {
+      out += ch;
+      escapeNext = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      out += ch;
+      continue;
+    }
+    if (inString && (ch === '\n' || ch === '\r' || ch === '\t')) {
+      out += ch === '\n' ? '\\n' : ch === '\r' ? '\\r' : '\\t';
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+};
+
 const parseJson = (text) => {
   const cleaned = text.replace(/```json|```/g, '').trim();
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    return JSON.parse(escapeControlCharsInStrings(cleaned));
+  }
 };
 
 // Small helper so every call site doesn't repeat the chat.completions shape.
