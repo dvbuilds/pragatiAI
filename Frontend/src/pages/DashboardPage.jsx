@@ -386,7 +386,7 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
         <footer className="w-full py-12 px-6 md:px-12 mt-auto bg-[#eceef0] border-t border-[#c6c6cd]">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
             <div>
-              <span className="font-extrabold text-lg text-black mb-1 block">CivicPulse AI</span>
+              <span className="font-extrabold text-lg text-black mb-1 block">Pragati AI</span>
               <p className="text-xs text-slate-500 max-w-sm">
                 Empowering citizens through transparent, intelligent, and accessible government services.
               </p>
