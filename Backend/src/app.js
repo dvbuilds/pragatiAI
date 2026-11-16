@@ -31,7 +31,7 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-app.get('/health', (_req, res) => res.status(200).json({ status: 'ok', uptime: process.uptime() }));
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok', uptime: process.uptime() }));
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.originalUrl}`);
   next();
