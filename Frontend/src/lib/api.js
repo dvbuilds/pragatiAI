@@ -30,6 +30,15 @@ export const setAccessToken = (token) => {
   accessToken = token || null;
 };
 
+// ── Selected UI language ────────────────────────────────────────────────
+// Sent on every request so the backend's AI replies (assistant chat, complaint
+// drafts, document guides, scheme matches, issue triage) follow the language
+// the citizen picked. See Backend/src/middleware/language.js.
+let appLanguage = 'en';
+export const setApiLanguage = (code) => {
+  appLanguage = code || 'en';
+};
+
 export const clearAccessToken = () => {
   accessToken = null;
 };
@@ -38,6 +47,7 @@ api.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
+  config.headers['X-App-Language'] = appLanguage;
   return config;
 });
 

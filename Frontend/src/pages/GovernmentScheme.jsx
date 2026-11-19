@@ -2,31 +2,13 @@ import { useState, useEffect } from "react";
 import { Sparkles, Search, ExternalLink, Loader2, AlertCircle } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import api from "../lib/api";
+import { useLanguage } from "../i18n/LanguageContext";
 
-const TRENDING = [
-  {
-    title: "PM-KISAN Samman Nidhi",
-    category: "Agriculture",
-    benefit: "₹6,000/year direct benefit transfer to eligible farmers.",
-  },
-  {
-    title: "Startup India Seed Fund",
-    category: "Entrepreneurship",
-    benefit: "Financial assistance for proof of concept and market entry.",
-  },
-  {
-    title: "National Scholarship Portal",
-    category: "Education",
-    benefit: "Consolidated portal for central and state scholarships.",
-  },
-  {
-    title: "Stand-Up India",
-    category: "Finance",
-    benefit: "Bank loans between ₹10L – ₹1Cr for SC/ST and women entrepreneurs.",
-  },
-];
+// Illustrative list; text comes from the dictionary (schemes.popular.<id>.*).
+const TRENDING_IDS = ["pmkisan", "startup", "nsp", "standup"];
 
 export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     age: currentUser?.profile?.age ?? "",
     gender: currentUser?.profile?.gender ?? "",
@@ -54,7 +36,7 @@ export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) 
       });
       setMatches(data.data.matches || []);
     } catch (err) {
-      setError(err?.response?.data?.message || "Could not fetch scheme matches. Please try again.");
+      setError(err?.response?.data?.message || t("schemes.finder.error"));
     } finally {
       setIsLoading(false);
     }
@@ -84,11 +66,10 @@ export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) 
             {/* Header */}
             <header className="mb-8">
               <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight mb-2">
-                Government Schemes
+                {t("schemes.page.title")}
               </h2>
               <p className="text-lg text-slate-600 max-w-2xl">
-                Discover and apply for state and central government programs tailored to your
-                profile using our AI-driven matching engine.
+                {t("schemes.page.intro")}
               </p>
             </header>
 
@@ -109,50 +90,50 @@ export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) 
                     <div className="bg-teal-100 text-teal-700 p-2 rounded-lg">
                       <Sparkles className="h-6 w-6" />
                     </div>
-                    <h3 className="text-2xl font-semibold text-slate-900">AI Scheme Finder</h3>
+                    <h3 className="text-2xl font-semibold text-slate-900">{t("schemes.finder.title")}</h3>
                   </div>
                   <form onSubmit={runMatch} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Field label="Age">
+                    <Field label={t("schemes.finder.age")}>
                       <input
                         name="age"
                         value={form.age}
                         onChange={handleChange}
                         type="number"
-                        placeholder="Enter your age"
+                        placeholder={t("schemes.finder.agePlaceholder")}
                         className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all bg-white"
                       />
                     </Field>
-                    <Field label="Gender">
+                    <Field label={t("schemes.finder.gender")}>
                       <select
                         name="gender"
                         value={form.gender}
                         onChange={handleChange}
                         className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all bg-white"
                       >
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                        <option value="prefer_not_to_say">Prefer not to say</option>
+                        <option value="">{t("schemes.finder.gender.select")}</option>
+                        <option value="male">{t("schemes.finder.gender.male")}</option>
+                        <option value="female">{t("schemes.finder.gender.female")}</option>
+                        <option value="other">{t("schemes.finder.gender.other")}</option>
+                        <option value="prefer_not_to_say">{t("schemes.finder.gender.prefer_not_to_say")}</option>
                       </select>
                     </Field>
-                    <Field label="Occupation">
+                    <Field label={t("schemes.finder.occupation")}>
                       <input
                         name="occupation"
                         value={form.occupation}
                         onChange={handleChange}
                         type="text"
-                        placeholder="e.g. Student, Farmer, Self-Employed"
+                        placeholder={t("schemes.finder.occupationPlaceholder")}
                         className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all bg-white"
                       />
                     </Field>
-                    <Field label="Annual Income (₹)">
+                    <Field label={t("schemes.finder.income")}>
                       <input
                         name="income"
                         value={form.income}
                         onChange={handleChange}
                         type="number"
-                        placeholder="e.g. 500000"
+                        placeholder={t("schemes.finder.incomePlaceholder")}
                         className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all bg-white"
                       />
                     </Field>
@@ -163,7 +144,7 @@ export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) 
                         className="w-full bg-teal-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-teal-700 active:scale-[0.98] transition-all shadow-sm disabled:opacity-60 cursor-pointer"
                       >
                         {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
-                        {isLoading ? "Matching..." : "Find Matching Schemes"}
+                        {isLoading ? t("schemes.finder.matching") : t("schemes.finder.submit")}
                       </button>
                     </div>
                   </form>
@@ -172,10 +153,10 @@ export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) 
                 {/* Recommendations */}
                 <section className="space-y-6">
                   <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-                    <h4 className="text-2xl font-semibold text-slate-900">AI Recommendations</h4>
+                    <h4 className="text-2xl font-semibold text-slate-900">{t("schemes.results.title")}</h4>
                     {matches && (
                       <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-bold text-slate-600">
-                        {matches.length} MATCHES FOUND
+                        {t("schemes.results.count", { count: matches.length })}
                       </span>
                     )}
                   </div>
@@ -189,7 +170,7 @@ export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) 
 
                   {!error && hasSearched && matches?.length === 0 && (
                     <p className="text-sm text-slate-500 p-4">
-                      No confident matches yet — fill in more profile details above and try again.
+                      {t("schemes.results.empty")}
                     </p>
                   )}
 
@@ -201,14 +182,14 @@ export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) 
                       <div className="flex justify-between items-start mb-4 gap-4">
                         <div>
                           <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-                            AI Match
+                            {t("schemes.results.badge")}
                           </span>
                           <h5 className="text-xl font-bold text-slate-900 mt-2">{rec.name}</h5>
                         </div>
                       </div>
                       <p className="text-slate-600 mb-3">{rec.whyEligible}</p>
                       <p className="text-slate-500 text-sm mb-6">
-                        <span className="font-semibold text-slate-700">How to apply: </span>
+                        <span className="font-semibold text-slate-700">{t("schemes.results.howToApply")}</span>
                         {rec.howToApply}
                       </p>
                       <a
@@ -217,7 +198,7 @@ export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) 
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-6 py-2 border-2 border-slate-900 text-slate-900 font-bold rounded-lg hover:bg-slate-900 hover:text-white transition-colors"
                       >
-                        Apply Now
+                        {t("schemes.results.apply")}
                         <ExternalLink className="w-4 h-4" />
                       </a>
                     </article>
@@ -229,21 +210,21 @@ export default function GovernmentScheme({ onNavigate, onLogout, currentUser }) 
               <aside className="lg:col-span-3 space-y-6">
                 <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-5">
-                    <h4 className="text-lg font-semibold text-slate-900">Popular Schemes</h4>
+                    <h4 className="text-lg font-semibold text-slate-900">{t("schemes.popular.title")}</h4>
                   </div>
                   <ul className="space-y-4">
-                    {TRENDING.map((t, i) => (
-                      <li key={t.title} className="pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                    {TRENDING_IDS.map((id, i) => (
+                      <li key={id} className="pb-4 border-b border-slate-100 last:border-0 last:pb-0">
                         <div className="flex items-start gap-3">
                           <span className="text-slate-300 font-bold text-lg leading-none w-6">
                             {String(i + 1).padStart(2, "0")}
                           </span>
                           <div className="flex-1">
                             <p className="text-xs text-teal-700 font-semibold uppercase tracking-wide">
-                              {t.category}
+                              {t(`schemes.popular.${id}.category`)}
                             </p>
-                            <p className="font-semibold text-slate-900 mb-1">{t.title}</p>
-                            <p className="text-sm text-slate-600">{t.benefit}</p>
+                            <p className="font-semibold text-slate-900 mb-1">{t(`schemes.popular.${id}.title`)}</p>
+                            <p className="text-sm text-slate-600">{t(`schemes.popular.${id}.benefit`)}</p>
                           </div>
                         </div>
                       </li>

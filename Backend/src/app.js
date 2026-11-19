@@ -9,6 +9,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import apiRoutes from './routes/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
+import { attachLanguage } from './middleware/language.js';
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(cookieParser());
 app.use(mongoSanitize()); // strips $ and . operators from user input to block NoSQL injection
 app.use(globalLimiter);
+app.use(attachLanguage);
 
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));

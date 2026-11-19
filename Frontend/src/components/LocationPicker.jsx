@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { LocateFixed, MapPin } from 'lucide-react';
 import { pickerDivIcon } from '../lib/leafletIcons';
+import { useLanguage } from '../i18n/LanguageContext';
 
 /**
  * Reverse-geocodes a lat/lng into a human-readable address using
@@ -44,6 +45,7 @@ function ClickToPlace({ onPlace }) {
  *   onChange: ({ lat, lng, address }) => void
  */
 export default function LocationPicker({ value, defaultCenter, onChange }) {
+  const { t } = useLanguage();
   const [position, setPosition] = useState(value || null);
   const [address, setAddress] = useState('');
   const [isLocating, setIsLocating] = useState(false);
@@ -121,16 +123,16 @@ export default function LocationPicker({ value, defaultCenter, onChange }) {
           className="absolute bottom-3 right-3 z-[400] bg-white shadow-md border border-slate-200 rounded-full px-3 py-2 text-[11px] font-bold text-teal-700 hover:bg-teal-50 transition-all flex items-center gap-1.5 disabled:opacity-60"
         >
           <LocateFixed className="w-3.5 h-3.5" />
-          {isLocating ? 'Locating...' : 'Use my location'}
+          {isLocating ? t('portal.picker.locating') : t('portal.picker.useMyLocation')}
         </button>
       </div>
 
       <div className="flex items-start gap-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-3">
         <MapPin className="w-4 h-4 text-teal-700 flex-shrink-0 mt-0.5" />
-        {!position && <span>Tap the map to drop a pin at the issue location, or use your current location.</span>}
+        {!position && <span>{t('portal.picker.hint')}</span>}
         {position && (
           <span>
-            {isResolvingAddress ? 'Looking up address...' : (address || `${position.lat.toFixed(5)}, ${position.lng.toFixed(5)}`)}
+            {isResolvingAddress ? t('portal.picker.lookingUp') : (address || `${position.lat.toFixed(5)}, ${position.lng.toFixed(5)}`)}
           </span>
         )}
       </div>

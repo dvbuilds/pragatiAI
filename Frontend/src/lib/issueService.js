@@ -1,4 +1,5 @@
 import api from './api';
+import { englishDictionary, interpolate } from '../i18n/loader';
 
 /**
  * Fetches issues from the backend, optionally scoped to a radius around a
@@ -61,42 +62,42 @@ export async function fetchPortalStats() {
   return data?.data ?? { resolvedThisWeek: 0, recentlyResolved: [] };
 }
 
-/** Human-friendly labels used both for map pins and the detail panel. */
-export const ISSUE_TYPE_LABELS = {
-  pothole: 'Pothole Report',
-  lighting: 'Streetlight Issue',
-  sanitation: 'Sanitation Report',
-  noise: 'Noise Complaint',
-  other: 'Civic Report',
+// ── Display helpers ─────────────────────────────────────────────────────
+// All take an optional translate function / locale. Called without them they
+// return English, so any older call site keeps working unchanged.
+const englishT = (key, vars) => interpolate(englishDictionary[key] ?? key, vars);
+
+const ISSUE_STATUS_CLASSES = {
+  active: 'bg-[#b9c7e0]/30 text-[#0d1c2f]',
+  in_review: 'bg-amber-50 text-amber-700 border border-amber-100',
+  resolved: 'bg-emerald-50 text-emerald-700',
 };
 
-export function getIssueTitle(issue) {
-  return ISSUE_TYPE_LABELS[issue.type] || 'Civic Report';
+/** Title for an issue's type, e.g. "Pothole Report" (translated when `t` is given). */
+export function getIssueTitle(issue, t = englishT) {
+  const key = `issue.type.${issue?.type}`;
+  return t(key in englishDictionary ? key : 'issue.type.other');
 }
 
-/** Human-friendly label + Tailwind classes for a real backend issue status. */
-export const ISSUE_STATUS_META = {
-  active: { label: 'Active', className: 'bg-[#b9c7e0]/30 text-[#0d1c2f]' },
-  in_review: { label: 'In Review', className: 'bg-amber-50 text-amber-700 border border-amber-100' },
-  resolved: { label: 'Resolved', className: 'bg-emerald-50 text-emerald-700' },
-};
-
-export function getStatusMeta(status) {
-  return ISSUE_STATUS_META[status] || ISSUE_STATUS_META.active;
+/** Translated label + Tailwind classes for a backend issue status. */
+export function getStatusMeta(status, t = englishT) {
+  const known = status in ISSUE_STATUS_CLASSES ? status : 'active';
+  return { label: t(`issue.status.${known}`), className: ISSUE_STATUS_CLASSES[known] };
 }
 
-/** Turns a Mongo createdAt timestamp into "3 hours ago" style text. */
-export function timeAgo(dateString) {
+/** Turns a Mongo createdAt timestamp into "3 hours ago" style text in the user's language. */
+export function timeAgo(dateString, { t = englishT, locale = 'en' } = {}) {
   if (!dateString) return '';
   const diffMs = Date.now() - new Date(dateString).getTime();
   const minutes = Math.floor(diffMs / 60000);
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
+  if (minutes < 1) return t('issue.time.justNow');
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'always' });
+  if (minutes < 60) return rtf.format(-minutes, 'minute');
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  if (hours < 24) return rtf.format(-hours, 'hour');
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
-  return new Date(dateString).toLocaleDateString();
+  if (days < 7) return rtf.format(-days, 'day');
+  return new Date(dateString).toLocaleDateString(locale);
 }
 
 /** Normalizes a backend Issue document's GeoJSON [lng,lat] into {lat,lng}. */

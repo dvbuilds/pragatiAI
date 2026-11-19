@@ -13,7 +13,7 @@ export const createIssue = asyncHandler(async (req, res) => {
 
   // AI categorization happens server-side now (real Gemini call, not the mock
   // setTimeout from the frontend prototype), so results can't be spoofed by the client.
-  const analysis = await categorizeIssue(description);
+  const analysis = await categorizeIssue(description, { language: req.language });
 
   let photo = { url: null, publicId: null };
   if (req.file?.path) {

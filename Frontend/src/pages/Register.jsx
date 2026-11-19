@@ -18,9 +18,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function Register({ onNavigate }) {
   const { register } = useAuth();
+  const { t } = useLanguage();
 
   // Form State
   const [name, setName] = useState("");
@@ -38,27 +40,27 @@ export default function Register({ onNavigate }) {
   // backend enforces a lighter floor (8 chars + digit) as defense in depth.
   const validateForm = () => {
     if (!name.trim()) {
-      setErrorMessage("Please enter your full name.");
+      setErrorMessage(t('auth.register.error.name'));
       return false;
     }
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
-      setErrorMessage("Please enter a valid email address.");
+      setErrorMessage(t('auth.register.error.email'));
       return false;
     }
     if (password.length < 12) {
-      setErrorMessage("Password must be at least 12 characters long.");
+      setErrorMessage(t('auth.register.error.passwordLength'));
       return false;
     }
     if (!/[!@#$%^&*(),.?":{}|<>_]/.test(password)) {
-      setErrorMessage("Password must contain at least one symbol.");
+      setErrorMessage(t('auth.register.error.passwordSymbol'));
       return false;
     }
     if (!/\d/.test(password)) {
-      setErrorMessage("Password must contain at least one number.");
+      setErrorMessage(t('auth.register.error.passwordNumber'));
       return false;
     }
     if (!agreeToTerms) {
-      setErrorMessage("You must agree to the Terms of Service and Privacy Policy.");
+      setErrorMessage(t('auth.register.error.terms'));
       return false;
     }
     setErrorMessage("");
@@ -79,7 +81,7 @@ export default function Register({ onNavigate }) {
     } catch (err) {
       setIsSubmitting(false);
       setErrorMessage(
-        err?.response?.data?.message || "Something went wrong while creating your account. Please try again."
+        err?.response?.data?.message || t('auth.register.error.generic')
       );
     }
   };
@@ -106,14 +108,14 @@ export default function Register({ onNavigate }) {
               {/* Animated Accent Pill */}
               <div className="inline-flex items-center gap-1.5 py-1 px-3 bg-[#0c9488]/10 text-[#0c9488] text-xs font-semibold rounded-full tracking-wide">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Smart City Digital Infrastructure</span>
+                <span>{t('auth.register.pill')}</span>
               </div>
 
               <h1 className="text-3xl md:text-5xl font-extrabold text-[#131b2e] tracking-tight leading-[1.15]">
-                A smarter way to engage with your city.
+                {t('auth.register.hero.title')}
               </h1>
               <p className="text-base md:text-lg text-[#45464d] leading-relaxed">
-                Join thousands of citizens using CivicPulse AI to streamline public requests, track neighborhood updates, and receive personalized civic insights.
+                {t('auth.register.hero.subtitle')}
               </p>
             </div>
 
@@ -124,9 +126,9 @@ export default function Register({ onNavigate }) {
                 <div className="w-10 h-10 rounded-lg bg-[#0c9488]/10 flex items-center justify-center mb-4 text-[#0c9488] group-hover:scale-110 transition-transform">
                   <Sparkles className="w-5 h-5 fill-[#0c9488]/10" />
                 </div>
-                <h3 className="font-semibold text-sm text-[#131b2e] mb-1">AI Assistant</h3>
+                <h3 className="font-semibold text-sm text-[#131b2e] mb-1">{t('auth.register.feature.assistant.title')}</h3>
                 <p className="text-xs text-[#45464d] leading-relaxed">
-                  Get instant answers to complex city regulations, forms, and procedures.
+                  {t('auth.register.feature.assistant.body')}
                 </p>
               </div>
 
@@ -135,9 +137,9 @@ export default function Register({ onNavigate }) {
                 <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4 text-blue-600 group-hover:scale-110 transition-transform">
                   <TrendingUp className="w-5 h-5" />
                 </div>
-                <h3 className="font-semibold text-sm text-[#131b2e] mb-1">Track Progress</h3>
+                <h3 className="font-semibold text-sm text-[#131b2e] mb-1">{t('auth.register.feature.progress.title')}</h3>
                 <p className="text-xs text-[#45464d] leading-relaxed">
-                  Real-time status updates on every municipal service request you submit.
+                  {t('auth.register.feature.progress.body')}
                 </p>
               </div>
 
@@ -145,7 +147,7 @@ export default function Register({ onNavigate }) {
               <div className="p-5 rounded-xl bg-white border border-[#e2e8f0]/80 shadow-sm sm:col-span-2 flex flex-col sm:flex-row items-center gap-5 hover:shadow-md transition-shadow group">
                 <div className="h-20 w-full sm:w-28 rounded-lg overflow-hidden flex-shrink-0 border border-[#e2e8f0] relative">
                   <img
-                    alt="Civic Map Interface"
+                    alt={t('auth.register.feature.security.image')}
                     className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
                     referrerPolicy="no-referrer"
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHXqU0C1W3QWRON3v_gMw6nV89l7d6r5mlHg5Hmty-9ASflSiBJ_U2U-X27OBhTfkHuGdfPZaVXIIEEFIpAEsKAL6wmvFHAm0Djstz-OxOS4ShZ1ZNs9Y7NKVSziQK2-KmFr24z2g1eg_FyqQTdenaeeCBZ-jV0IIfD_tNKXyrn_A0hx0bf9Zekj5hZlDbunhjz9B6wRX27Bl8yi2UTBjxUBYvNU3vXpcC8X5hb2RA6RbrHqrk9ySKJg"
@@ -155,10 +157,10 @@ export default function Register({ onNavigate }) {
                 <div className="text-center sm:text-left">
                   <div className="flex items-center gap-1.5 justify-center sm:justify-start mb-1 text-[#0c9488]">
                     <ShieldCheck className="w-4 h-4" />
-                    <h4 className="font-semibold text-sm text-[#131b2e]">Verified Security</h4>
+                    <h4 className="font-semibold text-sm text-[#131b2e]">{t('auth.register.feature.security.title')}</h4>
                   </div>
                   <p className="text-xs text-[#45464d] leading-relaxed">
-                    Government-grade encryption protocols and secure storage for all your personal documentation and interactions.
+                    {t('auth.register.feature.security.body')}
                   </p>
                 </div>
               </div>
@@ -181,10 +183,10 @@ export default function Register({ onNavigate }) {
                   >
                     <div className="mb-6">
                       <h2 className="text-2xl font-bold text-[#131b2e] mb-1.5 tracking-tight">
-                        Create Citizen Account
+                        {t('auth.register.form.title')}
                       </h2>
                       <p className="text-sm text-[#45464d]">
-                        Enter your details to start your digital journey.
+                        {t('auth.register.form.subtitle')}
                       </p>
                     </div>
 
@@ -193,7 +195,7 @@ export default function Register({ onNavigate }) {
                       {/* Name Input */}
                       <div className="space-y-1">
                         <label className="text-xs font-semibold text-[#45464d] uppercase tracking-wider" htmlFor="name">
-                          Full Name
+                          {t('auth.register.name.label')}
                         </label>
                         <div className="relative group">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#76777d] group-focus-within:text-[#131b2e] transition-colors" />
@@ -203,7 +205,7 @@ export default function Register({ onNavigate }) {
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="Alex Johnson"
+                            placeholder={t('auth.register.name.placeholder')}
                             required
                             disabled={isSubmitting}
                             className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 hover:bg-slate-50 border border-[#c6c6cd] rounded-lg focus:ring-2 focus:ring-[#0c9488]/20 focus:border-[#0c9488] focus:bg-white outline-none transition-all text-sm text-[#191c1e]"
@@ -214,7 +216,7 @@ export default function Register({ onNavigate }) {
                       {/* Email Input */}
                       <div className="space-y-1">
                         <label className="text-xs font-semibold text-[#45464d] uppercase tracking-wider" htmlFor="email">
-                          Email Address
+                          {t('auth.register.email.label')}
                         </label>
                         <div className="relative group">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#76777d] group-focus-within:text-[#131b2e] transition-colors" />
@@ -224,7 +226,7 @@ export default function Register({ onNavigate }) {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="alex@example.gov"
+                            placeholder={t('auth.register.email.placeholder')}
                             required
                             disabled={isSubmitting}
                             className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 hover:bg-slate-50 border border-[#c6c6cd] rounded-lg focus:ring-2 focus:ring-[#0c9488]/20 focus:border-[#0c9488] focus:bg-white outline-none transition-all text-sm text-[#191c1e]"
@@ -236,7 +238,7 @@ export default function Register({ onNavigate }) {
                       <div className="space-y-1">
                         <div className="flex justify-between items-center">
                           <label className="text-xs font-semibold text-[#45464d] uppercase tracking-wider" htmlFor="password">
-                            Create Password
+                            {t('auth.register.password.label')}
                           </label>
                         </div>
                         <div className="relative group">
@@ -261,7 +263,7 @@ export default function Register({ onNavigate }) {
                           </button>
                         </div>
                         <p className="text-[11px] text-[#45464d] leading-normal pt-0.5">
-                          Must be at least 12 characters with a symbol and a number.
+                          {t('auth.register.password.hint')}
                         </p>
                       </div>
 
@@ -280,15 +282,23 @@ export default function Register({ onNavigate }) {
                           />
                         </div>
                         <label className="text-xs text-[#45464d] leading-normal select-none cursor-pointer" htmlFor="terms">
-                          I agree to the{" "}
-                          <a href="#" onClick={(e) => { e.preventDefault(); alert("Terms of Service details..."); }} className="text-[#0c9488] font-bold hover:underline">
-                            Terms of Service
-                          </a>{" "}
-                          and acknowledge the{" "}
-                          <a href="#" onClick={(e) => { e.preventDefault(); alert("Privacy Policy details..."); }} className="text-[#0c9488] font-bold hover:underline">
-                            Privacy Policy
-                          </a>{" "}
-                          regarding AI data processing.
+                          {t('auth.register.terms.label').split(/(\{terms\}|\{privacy\})/).map((part, i) => {
+                            if (part === '{terms}') {
+                              return (
+                                <a key={i} href="#" onClick={(e) => { e.preventDefault(); alert(t('auth.register.terms.alert')); }} className="text-[#0c9488] font-bold hover:underline">
+                                  {t('auth.register.terms.link')}
+                                </a>
+                              );
+                            }
+                            if (part === '{privacy}') {
+                              return (
+                                <a key={i} href="#" onClick={(e) => { e.preventDefault(); alert(t('auth.register.privacy.alert')); }} className="text-[#0c9488] font-bold hover:underline">
+                                  {t('auth.register.privacy.link')}
+                                </a>
+                              );
+                            }
+                            return part;
+                          })}
                         </label>
                       </div>
 
@@ -313,11 +323,11 @@ export default function Register({ onNavigate }) {
                         {isSubmitting ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin text-[#89f5e7]" />
-                            <span>Creating Account...</span>
+                            <span>{t('auth.register.submitting')}</span>
                           </>
                         ) : (
                           <>
-                            <span>Create Account</span>
+                            <span>{t('auth.register.submit')}</span>
                             <ArrowRight className="w-4.5 h-4.5" />
                           </>
                         )}
@@ -325,12 +335,12 @@ export default function Register({ onNavigate }) {
                     </form>
 
                     <p className="mt-6 text-center text-xs text-[#45464d] lg:hidden">
-                      Already have an account?{" "}
+                      {t('auth.register.haveAccount')}{" "}
                       <button
                         onClick={() => onNavigate('login')}
                         className="text-[#0c9488] font-bold hover:underline bg-transparent border-none p-0 cursor-pointer"
                       >
-                        Sign In
+                        {t('auth.signIn')}
                       </button>
                     </p>
                   </motion.div>
@@ -348,26 +358,26 @@ export default function Register({ onNavigate }) {
                     </div>
 
                     <h2 className="text-2xl font-bold text-[#131b2e] mb-2 tracking-tight">
-                      Welcome to CivicPulse!
+                      {t('auth.register.success.title')}
                     </h2>
                     <p className="text-sm text-[#45464d] max-w-xs mb-8 leading-relaxed">
-                      Hello <span className="font-semibold text-slate-800">{name}</span>, your citizen account has been successfully created. You can now access all AI-powered services.
+                      {t('auth.register.success.body', { name })}
                     </p>
 
                     {/* Next Steps List */}
                     <div className="w-full text-left bg-slate-50 rounded-xl p-4 border border-[#e2e8f0] mb-8 space-y-3">
-                      <h4 className="text-xs font-bold text-[#131b2e] uppercase tracking-wider">Your Next Steps:</h4>
+                      <h4 className="text-xs font-bold text-[#131b2e] uppercase tracking-wider">{t('auth.register.success.stepsTitle')}</h4>
                       <div className="flex gap-2.5 items-start text-xs text-[#45464d]">
                         <Check className="w-4 h-4 text-[#0c9488] shrink-0 mt-0.5" />
-                        <span>Complete your civic profile details</span>
+                        <span>{t('auth.register.success.step1')}</span>
                       </div>
                       <div className="flex gap-2.5 items-start text-xs text-[#45464d]">
                         <Check className="w-4 h-4 text-[#0c9488] shrink-0 mt-0.5" />
-                        <span>Browse local council updates and news</span>
+                        <span>{t('auth.register.success.step2')}</span>
                       </div>
                       <div className="flex gap-2.5 items-start text-xs text-[#45464d]">
                         <Check className="w-4 h-4 text-[#0c9488] shrink-0 mt-0.5" />
-                        <span>Ask our AI assistant about city guidelines</span>
+                        <span>{t('auth.register.success.step3')}</span>
                       </div>
                     </div>
 
@@ -376,7 +386,7 @@ export default function Register({ onNavigate }) {
                         onClick={() => onNavigate('dashboard')}
                         className="w-full bg-[#131b2e] hover:bg-slate-900 text-white font-semibold text-sm py-3 rounded-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        Go to Citizen Portal
+                        {t('auth.register.success.cta')}
                         <ArrowRight className="w-4.5 h-4.5" />
                       </button>
                     </div>
@@ -394,17 +404,17 @@ export default function Register({ onNavigate }) {
       <footer className="w-full py-6 px-6 md:px-10 bg-white border-t border-[#e2e8f0] z-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-[#45464d] font-medium text-center md:text-left">
-            © {new Date().getFullYear()} Digital Government Services. Powered by CivicPulse AI.
+            {t('auth.footer.copyright', { year: new Date().getFullYear() })}
           </p>
           <div className="flex gap-6">
             <a href="#" className="text-xs font-medium text-[#45464d] hover:text-[#131b2e] transition-colors">
-              Privacy Policy
+              {t('auth.footer.privacy')}
             </a>
             <a href="#" className="text-xs font-medium text-[#45464d] hover:text-[#131b2e] transition-colors">
-              Accessibility
+              {t('auth.footer.accessibility')}
             </a>
             <a href="#" className="text-xs font-medium text-[#45464d] hover:text-[#131b2e] transition-colors">
-              Support Services
+              {t('auth.register.footer.support')}
             </a>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { languageDirective, resolveLanguage, LANGUAGES } from '../config/languages.js';
 
 const ai = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
@@ -77,7 +78,7 @@ const askGroq = async (prompt, { systemInstruction } = {}) => {
  * assigns a department + priority. Replaces the frontend's mock setTimeout logic
  * with a real model call.
  */
-export const categorizeIssue = async (description) => {
+export const categorizeIssue = async (description, { language } = {}) => {
   const prompt = `You are the triage system for a civic issue reporting app. Given a citizen's description of a problem, classify it.
 
 Description: "${description}"
@@ -89,7 +90,7 @@ Respond with ONLY a JSON object, no markdown, no preamble, in this exact shape:
   "priority": "Low" | "Medium" | "High",
   "confidence": <number 0-1>,
   "reasoning": "<one sentence explaining the classification>"
-}`;
+}${languageDirective(language, { keep: ['"category" (one of the listed values)', '"department" (English municipal department name, it is stored in a database)', '"priority" (Low | Medium | High)'] })}`;
 
   try {
     const text = await askGroq(prompt);
@@ -122,7 +123,7 @@ const keywordFallbackCategorize = (description) => {
  * Drafts a formal complaint email about waterlogging, inefficient government
  * service, or crime rate in a given area.
  */
-export const generateComplaintEmail = async ({ issueCategory, area, details, citizenName }) => {
+export const generateComplaintEmail = async ({ issueCategory, area, details, citizenName, language }) => {
   const categoryLabel = {
     waterlogging: 'waterlogging / drainage failure',
     inefficient_service: 'inefficient performance of government officials',
@@ -147,7 +148,7 @@ Respond with ONLY a JSON object, no markdown fences:
 {
   "subject": "<concise formal subject line>",
   "body": "<the full email body including greeting and signature>"
-}`;
+}${languageDirective(language, { keep: ["the citizen's name and the area/locality exactly as given"] })}`;
 
   const text = await askGroq(prompt);
   return parseJson(text);
@@ -157,7 +158,7 @@ Respond with ONLY a JSON object, no markdown fences:
  * Generates a step-by-step guide for creating/updating a government document,
  * paired with an official application link when we have one on file.
  */
-export const generateDocumentGuide = async ({ documentName, action, officialLink }) => {
+export const generateDocumentGuide = async ({ documentName, action, officialLink, language }) => {
   const prompt = `You are a helpful assistant guiding an Indian citizen through a government document process.
 
 Document: ${documentName}
@@ -174,7 +175,7 @@ Respond with ONLY a JSON object, no markdown fences:
   "estimatedTime": "<typical processing time>",
   "estimatedFee": "<typical fee, or 'Free' if applicable>",
   "notes": "<any important caveats>"
-}`;
+}${languageDirective(language, { keep: ['"documentName" and "action" (echo exactly as given above)'] })}`;
 
   const text = await askGroq(prompt);
   const guide = parseJson(text);
@@ -187,7 +188,7 @@ Respond with ONLY a JSON object, no markdown fences:
  * government welfare schemes, using the seeded scheme list as grounding so the
  * model doesn't hallucinate program names, then explains eligibility + how to apply.
  */
-export const matchSchemes = async ({ profile, seedSchemes }) => {
+export const matchSchemes = async ({ profile, seedSchemes, language }) => {
   const prompt = `You are a government scheme eligibility advisor for Indian citizens.
 
 Citizen profile:
@@ -211,10 +212,21 @@ Respond with ONLY a JSON array, no markdown fences:
     "howToApply": "<short practical process summary>",
     "officialLink": "<link, must match reference list>"
   }
-]`;
+]${languageDirective(language, { keep: ['"name" (must match the reference list exactly, in English, so it can be verified)', '"officialLink"'] })}`;
 
   const text = await askGroq(prompt);
   return parseJson(text);
+};
+
+// The chat is free text, so the rule is stated as a behaviour, not a JSON
+// constraint. The user's UI language wins unless they explicitly ask otherwise.
+const chatLanguageRule = (language) => {
+  const code = resolveLanguage(language);
+  if (code === 'en') return '';
+  const { name, native } = LANGUAGES[code];
+  return `
+
+LANGUAGE: The citizen has chosen ${name} (${native}) as their app language. Always reply in ${name}, written in its native script, even if their message is in English or another language — unless they explicitly ask you to use a different language. Keep official names (scheme names, document names, URLs, phone numbers like 112) recognisable.`;
 };
 
 /**
@@ -224,7 +236,7 @@ Respond with ONLY a JSON array, no markdown fences:
  * citizens toward the dedicated tools (issue reporting, complaint drafting,
  * document guides, scheme matching) instead of hallucinating specifics.
  */
-export const chatWithAssistant = async (history) => {
+export const chatWithAssistant = async (history, { language } = {}) => {
   const systemInstruction = `You are CivicPulse AI, a municipal citizen assistant embedded in a civic-services app. Answer questions about permits, parking, sanitation schedules, zoning, local taxes, and general civic/government topics concisely and practically. Be upfront when an answer depends on the citizen's specific city/ward and could vary.
 
 The app also has four dedicated tools you should point users toward when relevant, rather than trying to fully complete these tasks yourself in chat:
@@ -233,7 +245,7 @@ The app also has four dedicated tools you should point users toward when relevan
 - Getting step-by-step guidance (with the official link) for creating or updating a government document
 - Finding government welfare schemes they're eligible for based on age, gender, and income
 
-Keep replies under 120 words unless the user is asking for a detailed list of steps.`;
+Keep replies under 120 words unless the user is asking for a detailed list of steps.${chatLanguageRule(language)}`;
 
   const messages = [
     { role: 'system', content: systemInstruction },

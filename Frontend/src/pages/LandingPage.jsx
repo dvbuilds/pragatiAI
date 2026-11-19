@@ -5,17 +5,19 @@ import {
   CheckCircle, Star, Send, ArrowUpRight, Globe
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function LandingPage({ onNavigate }) {
+  const { t } = useLanguage();
   const [searchVal, setSearchVal] = useState('');
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
   // Quick search keywords
   const tryQueries = [
-    "Renew parking permit",
-    "Trash collection schedule",
-    "Building codes"
+    t('landing.search.try1'),
+    t('landing.search.try2'),
+    t('landing.search.try3')
   ];
 
   const handleSearchSubmit = (e) => {
@@ -50,7 +52,7 @@ export default function LandingPage({ onNavigate }) {
               className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#d5e3fd] text-[#3a485c] rounded-full text-xs font-semibold"
             >
               <Sparkles className="w-3.5 h-3.5 text-teal-600 animate-pulse" />
-              <span>Now powering 50+ City Services</span>
+              <span>{t('landing.hero.badge')}</span>
             </motion.div>
             
             <motion.h1 
@@ -59,8 +61,8 @@ export default function LandingPage({ onNavigate }) {
               transition={{ delay: 0.1 }}
               className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950 leading-[1.1]"
             >
-              Government services, <br />
-              <span className="text-[#0c9488]">simplified by AI.</span>
+              {t('landing.hero.titleLine1')} <br />
+              <span className="text-[#0c9488]">{t('landing.hero.titleLine2')}</span>
             </motion.h1>
             
             <motion.p 
@@ -69,7 +71,7 @@ export default function LandingPage({ onNavigate }) {
               transition={{ delay: 0.2 }}
               className="text-base md:text-lg text-[#515f74] max-w-2xl mx-auto leading-relaxed"
             >
-              Access municipal resources, manage permits, and engage with your local government through a single, intuitive dashboard.
+              {t('landing.hero.subtitle')}
             </motion.p>
           </div>
 
@@ -90,18 +92,18 @@ export default function LandingPage({ onNavigate }) {
                 value={searchVal}
                 onChange={(e) => setSearchVal(e.target.value)}
                 className="w-full border-none focus:outline-none focus:ring-0 px-4 py-3 text-sm md:text-base text-slate-800 placeholder-slate-400"
-                placeholder="How can the city help you today?"
+                placeholder={t('landing.hero.search.placeholder')}
               />
               <button 
                 type="submit"
                 className="bg-black text-white px-6 py-3 rounded-xl text-xs font-semibold hover:bg-slate-900 transition-all active:scale-98"
               >
-                Search
+                {t('landing.hero.search.button')}
               </button>
             </form>
 
             <div className="mt-4 flex flex-wrap justify-center gap-2 items-center">
-              <span className="text-xs text-[#515f74]">Try:</span>
+              <span className="text-xs text-[#515f74]">{t('landing.hero.search.tryLabel')}</span>
               {tryQueries.map((query, idx) => (
                 <button 
                   key={idx}
@@ -121,16 +123,16 @@ export default function LandingPage({ onNavigate }) {
       <section id="features" className="py-16 px-6 md:px-12 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div className="space-y-2">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Key City Services</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{t('landing.services.title')}</h2>
             <p className="text-sm text-[#515f74] max-w-md">
-              Streamlined pathways for the most common municipal tasks, updated in real-time by CivicPulse.
+              {t('landing.services.subtitle')}
             </p>
           </div>
           <button 
             onClick={() => onNavigate('dashboard')}
             className="text-black font-semibold text-xs flex items-center gap-1 group hover:text-teal-700 transition-colors cursor-pointer"
           >
-            <span>View All Services</span> 
+            <span>{t('landing.services.viewAll')}</span> 
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
@@ -148,9 +150,9 @@ export default function LandingPage({ onNavigate }) {
               <ArrowUpRight className="w-5 h-5 text-slate-400 group-hover:text-black group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-1.5 text-slate-950">Permits &amp; Licensing</h3>
+              <h3 className="text-xl font-bold mb-1.5 text-slate-950">{t('landing.services.permits.title')}</h3>
               <p className="text-sm text-[#515f74] max-w-md">
-                Apply for building permits, business licenses, or residential parking in under 5 minutes.
+                {t('landing.services.permits.description')}
               </p>
             </div>
           </div>
@@ -164,9 +166,9 @@ export default function LandingPage({ onNavigate }) {
               <Vote className="w-6 h-6 text-teal-300" />
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-1.5 text-white">Voting &amp; Elections</h3>
+              <h3 className="text-xl font-bold mb-1.5 text-white">{t('landing.services.voting.title')}</h3>
               <p className="text-sm text-slate-300">
-                Register to vote, find your polling station, and view upcoming ballot information.
+                {t('landing.services.voting.description')}
               </p>
             </div>
           </div>
@@ -180,9 +182,9 @@ export default function LandingPage({ onNavigate }) {
               <HeartPulse className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-1.5 text-slate-950">Public Health</h3>
+              <h3 className="text-xl font-bold mb-1.5 text-slate-950">{t('landing.services.health.title')}</h3>
               <p className="text-sm text-[#515f74]">
-                Access clinic schedules, health alerts, and community wellness programs.
+                {t('landing.services.health.description')}
               </p>
             </div>
           </div>
@@ -196,9 +198,9 @@ export default function LandingPage({ onNavigate }) {
               <Bus className="w-6 h-6 text-black" />
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-1.5 text-slate-950">Transit</h3>
+              <h3 className="text-xl font-bold mb-1.5 text-slate-950">{t('landing.services.transit.title')}</h3>
               <p className="text-sm text-[#515f74]">
-                Live bus tracking, route planning, and digital fare card management.
+                {t('landing.services.transit.description')}
               </p>
             </div>
           </div>
@@ -212,9 +214,9 @@ export default function LandingPage({ onNavigate }) {
               <Leaf className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-1.5 text-slate-950">Environment</h3>
+              <h3 className="text-xl font-bold mb-1.5 text-slate-950">{t('landing.services.environment.title')}</h3>
               <p className="text-sm text-[#515f74]">
-                Waste management, park services, and sustainability reports.
+                {t('landing.services.environment.description')}
               </p>
             </div>
           </div>
@@ -228,18 +230,18 @@ export default function LandingPage({ onNavigate }) {
           <div className="space-y-8">
             <div className="space-y-4">
               <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-950 leading-tight">
-                The AI Companion that <br />speaks your language.
+                {t('landing.companion.titleLine1')} <br />{t('landing.companion.titleLine2')}
               </h2>
               <p className="text-base text-[#515f74] leading-relaxed">
-                CivicPulse AI acts as a 24/7 personal assistant for city living. It translates complex legal jargon into plain English and helps you navigate bureaucracy effortlessly.
+                {t('landing.companion.description', { brand: 'CivicPulse AI' })}
               </p>
             </div>
             
             <ul className="space-y-4">
               {[
-                "Instant answers to city policy questions",
-                "Automated form pre-filling & document review",
-                "Proactive alerts for deadlines and hearings"
+                t('landing.companion.feature1'),
+                t('landing.companion.feature2'),
+                t('landing.companion.feature3')
               ].map((feature, i) => (
                 <li key={i} className="flex items-center gap-3">
                   <CheckCircle className="w-5 h-5 text-teal-600 flex-shrink-0" />
@@ -252,7 +254,7 @@ export default function LandingPage({ onNavigate }) {
               onClick={() => onNavigate('assistant')}
               className="bg-black hover:bg-slate-900 text-white px-8 py-3.5 rounded-xl text-xs font-semibold shadow-md active:scale-98 transition-all hover:-translate-y-0.5"
             >
-              Meet Your Assistant
+              {t('landing.companion.cta')}
             </button>
           </div>
 
@@ -269,26 +271,26 @@ export default function LandingPage({ onNavigate }) {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="text-[10px] font-semibold text-emerald-600 tracking-wider uppercase">Active</span>
+                  <span className="text-[10px] font-semibold text-emerald-600 tracking-wider uppercase">{t('landing.companion.status.active')}</span>
                 </div>
               </div>
 
               <div className="p-6 space-y-4 min-h-[250px] flex flex-col justify-end bg-slate-50/30">
                 <div className="self-end bg-[#d5e3fd] text-[#0d1c2f] px-4 py-2.5 rounded-2xl rounded-tr-none max-w-[80%] text-xs font-semibold leading-relaxed">
-                  I need to build a deck in my backyard. What permits do I need?
+                  {t('landing.companion.chat.question')}
                 </div>
                 
                 <div className="self-start bg-white text-slate-800 px-4 py-3 rounded-2xl rounded-tl-none max-w-[85%] border border-teal-100 flex flex-col gap-2 text-xs shadow-sm">
-                  <p className="font-bold text-slate-950">Based on your address in Ward 4:</p>
+                  <p className="font-bold text-slate-950">{t('landing.companion.chat.answerIntro')}</p>
                   <ul className="list-disc ml-4 space-y-1.5 text-[#515f74]">
-                    <li>Standard Residential Building Permit</li>
-                    <li>Zoning variance (if &gt; 200 sq ft)</li>
+                    <li>{t('landing.companion.chat.permit1')}</li>
+                    <li>{t('landing.companion.chat.permit2')}</li>
                   </ul>
                   <button 
                     onClick={() => onNavigate('assistant')}
                     className="text-teal-600 font-bold hover:underline text-left mt-1 cursor-pointer flex items-center gap-1"
                   >
-                    <span>Start Application</span> <ArrowRight className="w-3.5 h-3.5" />
+                    <span>{t('landing.companion.chat.startApplication')}</span> <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -301,15 +303,15 @@ export default function LandingPage({ onNavigate }) {
       {/* Trust & Proof Section */}
       <section className="py-20 px-6 md:px-12 max-w-7xl mx-auto text-center">
         <h3 className="text-xs uppercase tracking-[0.2em] font-semibold text-[#515f74]/70 mb-12">
-          Trusted by citizens and municipalities worldwide
+          {t('landing.trust.title')}
         </h3>
         
         {/* Logo Wall */}
         <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 opacity-60 text-slate-600 font-bold text-sm tracking-wider">
-          <span className="flex items-center gap-1.5 text-[#515f74]">🏛️ METRO CITY</span>
-          <span className="flex items-center gap-1.5 text-[#515f74]">🛡️ STATE GOV</span>
-          <span className="flex items-center gap-1.5 text-[#515f74]">🏙️ URBAN HUB</span>
-          <span className="flex items-center gap-1.5 text-[#515f74]">💻 CIVIC TECH</span>
+          <span className="flex items-center gap-1.5 text-[#515f74]">🏛️ {t('landing.trust.logo1')}</span>
+          <span className="flex items-center gap-1.5 text-[#515f74]">🛡️ {t('landing.trust.logo2')}</span>
+          <span className="flex items-center gap-1.5 text-[#515f74]">🏙️ {t('landing.trust.logo3')}</span>
+          <span className="flex items-center gap-1.5 text-[#515f74]">💻 {t('landing.trust.logo4')}</span>
         </div>
 
         {/* Testimonials and Stats Grid */}
@@ -323,26 +325,26 @@ export default function LandingPage({ onNavigate }) {
               ))}
             </div>
             <p className="text-sm text-slate-600 italic leading-relaxed">
-              "Finally, a government portal that feels like it was built in this century. I finished my permit in minutes."
+              {t('landing.trust.testimonial.quote')}
             </p>
-            <p className="font-bold text-xs text-slate-900">— Sarah J., Local Business Owner</p>
+            <p className="font-bold text-xs text-slate-900">{t('landing.trust.testimonial.author')}</p>
           </div>
 
           {/* Stat 1 */}
           <div className="p-8 border border-slate-200/80 rounded-3xl bg-white space-y-4 shadow-sm">
-            <div className="text-3xl font-extrabold text-black">1.2 Million</div>
-            <h4 className="font-bold text-sm text-slate-900">Requests Processed</h4>
+            <div className="text-3xl font-extrabold text-black">{t('landing.trust.stat1.value')}</div>
+            <h4 className="font-bold text-sm text-slate-900">{t('landing.trust.stat1.title')}</h4>
             <p className="text-xs text-[#515f74] leading-relaxed">
-              Processed through our digital channels this year with a verified 94% satisfaction rating from city residents.
+              {t('landing.trust.stat1.description')}
             </p>
           </div>
 
           {/* Stat 2 */}
           <div className="p-8 border border-slate-200/80 rounded-3xl bg-white space-y-4 shadow-sm">
-            <div className="text-3xl font-extrabold text-[#0c9488]">ISO 27001</div>
-            <h4 className="font-bold text-sm text-slate-900">Security Standard</h4>
+            <div className="text-3xl font-extrabold text-[#0c9488]">{t('landing.trust.stat2.value')}</div>
+            <h4 className="font-bold text-sm text-slate-900">{t('landing.trust.stat2.title')}</h4>
             <p className="text-xs text-[#515f74] leading-relaxed">
-              Enterprise-grade military encryption and data privacy standards protecting your digital identity and logs.
+              {t('landing.trust.stat2.description')}
             </p>
           </div>
 
@@ -359,23 +361,23 @@ export default function LandingPage({ onNavigate }) {
           
           <div className="relative z-10 space-y-8 max-w-2xl mx-auto">
             <h2 className="text-white text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
-              Ready for a better city experience?
+              {t('landing.cta.title')}
             </h2>
             <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-              Join thousands of citizens using CivicPulse AI to stay informed, engaged, and productive.
+              {t('landing.cta.description', { brand: 'CivicPulse AI' })}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
               <button 
                 onClick={() => onNavigate('dashboard')}
                 className="bg-white text-black px-8 py-3.5 rounded-xl text-xs font-bold hover:bg-slate-100 transition-all active:scale-98"
               >
-                Get Started Free
+                {t('landing.cta.getStarted')}
               </button>
               <button 
                 onClick={() => onNavigate('assistant')}
                 className="border border-white/20 text-white px-8 py-3.5 rounded-xl text-xs font-semibold hover:bg-white/10 transition-all active:scale-98"
               >
-                Contact City Hall
+                {t('landing.cta.contact')}
               </button>
             </div>
           </div>
@@ -389,39 +391,39 @@ export default function LandingPage({ onNavigate }) {
             <div className="space-y-4">
               <div className="font-extrabold text-xl text-black">CivicPulse AI</div>
               <p className="text-xs text-[#515f74] leading-relaxed">
-                Building the bridge between government and the digital age with transparency and trust.
+                {t('landing.footer.tagline')}
               </p>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-xs uppercase tracking-wider font-bold text-black">Platform</h4>
+              <h4 className="text-xs uppercase tracking-wider font-bold text-black">{t('landing.footer.platform.title')}</h4>
               <ul className="space-y-2 text-xs text-[#515f74]">
-                <li><button onClick={() => onNavigate('dashboard')} className="hover:underline hover:text-black">Citizen Dashboard</button></li>
-                <li><button onClick={() => onNavigate('assistant')} className="hover:underline hover:text-black">AI Assistant</button></li>
-                <li><button onClick={() => onNavigate('portal')} className="hover:underline hover:text-black">Public Portal</button></li>
-                <li><a href="#" className="hover:underline hover:text-black">Developer API</a></li>
+                <li><button onClick={() => onNavigate('dashboard')} className="hover:underline hover:text-black">{t('landing.footer.platform.dashboard')}</button></li>
+                <li><button onClick={() => onNavigate('assistant')} className="hover:underline hover:text-black">{t('landing.footer.platform.assistant')}</button></li>
+                <li><button onClick={() => onNavigate('portal')} className="hover:underline hover:text-black">{t('landing.footer.platform.portal')}</button></li>
+                <li><a href="#" className="hover:underline hover:text-black">{t('landing.footer.platform.api')}</a></li>
               </ul>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-xs uppercase tracking-wider font-bold text-black">Community</h4>
+              <h4 className="text-xs uppercase tracking-wider font-bold text-black">{t('landing.footer.community.title')}</h4>
               <ul className="space-y-2 text-xs text-[#515f74]">
-                <li><a href="#" className="hover:underline hover:text-black">Public Hearings</a></li>
-                <li><a href="#" className="hover:underline hover:text-black">Open Data Initiative</a></li>
-                <li><a href="#" className="hover:underline hover:text-black">Local Events</a></li>
-                <li><a href="#" className="hover:underline hover:text-black">Volunteering</a></li>
+                <li><a href="#" className="hover:underline hover:text-black">{t('landing.footer.community.hearings')}</a></li>
+                <li><a href="#" className="hover:underline hover:text-black">{t('landing.footer.community.openData')}</a></li>
+                <li><a href="#" className="hover:underline hover:text-black">{t('landing.footer.community.events')}</a></li>
+                <li><a href="#" className="hover:underline hover:text-black">{t('landing.footer.community.volunteering')}</a></li>
               </ul>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-xs uppercase tracking-wider font-bold text-black">Stay Updated</h4>
-              <p className="text-xs text-[#515f74]">Subscribe to city alerts and municipal news.</p>
+              <h4 className="text-xs uppercase tracking-wider font-bold text-black">{t('landing.footer.newsletter.title')}</h4>
+              <p className="text-xs text-[#515f74]">{t('landing.footer.newsletter.description')}</p>
               
               <form onSubmit={handleSubscribe} className="flex gap-1.5">
                 <input 
                   type="email" 
                   required
-                  placeholder="Email address" 
+                  placeholder={t('landing.footer.newsletter.placeholder')} 
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   className="bg-white border border-[#c6c6cd] rounded-lg px-3 py-2 text-xs w-full focus:outline-none focus:ring-1 focus:ring-black placeholder-slate-400"
@@ -440,19 +442,19 @@ export default function LandingPage({ onNavigate }) {
                   animate={{ opacity: 1 }}
                   className="text-emerald-700 text-[10px] font-bold block"
                 >
-                  ✓ Subscribed successfully!
+                  {t('landing.footer.newsletter.success')}
                 </motion.span>
               )}
             </div>
           </div>
 
           <div className="pt-8 border-t border-[#c6c6cd]/50 flex flex-col md:flex-row justify-between items-center gap-6 text-[11px] text-[#515f74]">
-            <p>© 2026 Digital Government Services. All rights reserved. Powered by CivicPulse AI.</p>
+            <p>{t('landing.footer.copyright', { brand: 'CivicPulse AI' })}</p>
             <div className="flex gap-6">
-              <a href="#" className="hover:underline">Privacy Policy</a>
-              <a href="#" className="hover:underline">Terms of Service</a>
-              <a href="#" className="hover:underline">Accessibility Standards</a>
-              <a href="#" className="hover:underline">Contact Support</a>
+              <a href="#" className="hover:underline">{t('landing.footer.legal.privacy')}</a>
+              <a href="#" className="hover:underline">{t('landing.footer.legal.terms')}</a>
+              <a href="#" className="hover:underline">{t('landing.footer.legal.accessibility')}</a>
+              <a href="#" className="hover:underline">{t('landing.footer.legal.support')}</a>
             </div>
           </div>
         </div>

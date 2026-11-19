@@ -6,12 +6,16 @@ import {
 } from 'lucide-react';
 import IssueWizardModal from '../components/IssueWizardModal';
 import Sidebar from '../components/Sidebar';
+import SosButton from '../components/SosButton';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useLanguage } from '../i18n/LanguageContext';
 import api from '../lib/api';
 import { fetchIssues, getIssueTitle, getStatusMeta, timeAgo } from '../lib/issueService';
 
 const REQUEST_PREVIEW_COUNT = 4;
 
 export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
+  const { t, locale } = useLanguage();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllRequests, setShowAllRequests] = useState(false);
@@ -28,7 +32,7 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
     setIssuesLoading(true);
     fetchIssues({ mine: true })
       .then((data) => { if (!cancelled) setMyIssues(data); })
-      .catch((err) => { if (!cancelled) setIssuesError(err?.response?.data?.message || 'Could not load your requests.'); })
+      .catch((err) => { if (!cancelled) setIssuesError(err?.response?.data?.message || t('dashboard.requests.loadFailed')); })
       .finally(() => { if (!cancelled) setIssuesLoading(false); });
     return () => { cancelled = true; };
   }, []);
@@ -54,7 +58,7 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
         const { data } = await api.post('/schemes/match', {});
         if (!cancelled) setRecommendations(data.data.matches || []);
       } catch (err) {
-        if (!cancelled) setRecsError(err?.response?.data?.message || 'Could not load recommendations right now.');
+        if (!cancelled) setRecsError(err?.response?.data?.message || t('dashboard.recs.loadFailed'));
       } finally {
         if (!cancelled) setRecsLoading(false);
       }
@@ -66,9 +70,9 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
   // Notification States
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([
-    { id: 1, text: "Your Parking Permit renewal is in review by City Transit.", read: false, time: "2 hours ago" },
-    { id: 2, text: "Action required: Upload income verification for Property Tax Exemption.", read: false, time: "1 day ago" },
-    { id: 3, text: "District 4 Budget Meeting starts in 3 days. RSVP now.", read: true, time: "2 days ago" }
+    { id: 1, key: 'n1', read: false },
+    { id: 2, key: 'n2', read: false },
+    { id: 3, key: 'n3', read: true },
   ]);
 
   // Selected event modal state
@@ -79,8 +83,8 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
 
   // First name for the greeting, and a short one/two-word location for the
   // header — both derived from the real logged-in user, not hardcoded.
-  const firstName = currentUser?.fullName?.trim().split(/\s+/)[0] || 'there';
-  const shortLocation = currentUser?.profile?.state?.trim() || 'Your Area';
+  const firstName = currentUser?.fullName?.trim().split(/\s+/)[0] || t('dashboard.greeting.fallbackName');
+  const shortLocation = currentUser?.profile?.state?.trim() || t('dashboard.header.defaultLocation');
 
   // Events list hotlinked from HTML
   const events = [
@@ -162,18 +166,19 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
           </div>
           
           <div className="hidden lg:block text-slate-500 text-xs font-medium">
-            Citizen Dashboard • <span className="text-black font-bold">{shortLocation}</span>
+            {t('dashboard.header.breadcrumb')} • <span className="text-black font-bold">{shortLocation}</span>
           </div>
           
           <div className="flex items-center gap-6">
-            <form onSubmit={handleSearch} className="relative group">
+            <form onSubmit={handleSearch} className="relative group hidden sm:block">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
               <input 
                 type="text" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 bg-[#f2f4f6] border border-[#c6c6cd]/50 rounded-full text-xs focus:outline-none focus:ring-2 focus:ring-teal-600/25 transition-all w-48 sm:w-64"
-                placeholder="Search services..." 
+                placeholder={t('dashboard.header.search.placeholder')}
+                aria-label={t('dashboard.header.search.placeholder')} 
               />
             </form>
             
@@ -182,6 +187,7 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
               <div className="relative">
                 <button 
                   onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  aria-label={t('dashboard.header.notifications.aria')}
                   className="text-slate-600 hover:text-black transition-colors relative p-1.5 rounded-full hover:bg-slate-100"
                 >
                   <Bell className="w-5 h-5" />
@@ -200,19 +206,19 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
                       className="absolute right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl w-80 overflow-hidden z-50 text-left p-1"
                     >
                       <div className="p-3 border-b border-slate-100 flex items-center justify-between">
-                        <span className="font-bold text-xs text-slate-800">Recent Notifications</span>
+                        <span className="font-bold text-xs text-slate-800">{t('dashboard.notifications.title')}</span>
                         <button 
                           onClick={markAllNotificationsRead}
                           className="text-[10px] font-bold text-teal-600 hover:underline cursor-pointer"
                         >
-                          Mark all read
+                          {t('dashboard.notifications.markAllRead')}
                         </button>
                       </div>
                       <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
                         {notifications.map(n => (
                           <div key={n.id} className={`p-3 text-xs leading-relaxed transition-colors ${n.read ? 'bg-white' : 'bg-teal-50/20'}`}>
-                            <p className="text-slate-700">{n.text}</p>
-                            <span className="text-[10px] text-slate-400 block mt-1">{n.time}</span>
+                            <p className="text-slate-700">{t(`dashboard.notifications.${n.key}.text`)}</p>
+                            <span className="text-[10px] text-slate-400 block mt-1">{t(`dashboard.notifications.${n.key}.time`)}</span>
                           </div>
                         ))}
                       </div>
@@ -223,12 +229,17 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
 
               <div className="h-4 w-[1px] bg-[#c6c6cd]/50" />
 
+              {/* The sidebar (with its picker) is hidden below lg, so offer it here */}
+              <LanguageSwitcher variant="light" className="lg:hidden" />
+
+              <SosButton compact onClick={() => onNavigate('sos')} />
+
               <button 
                 onClick={() => setIsWizardOpen(true)}
                 className="bg-black text-white font-semibold text-xs py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-900 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">New Request</span>
+                <span className="hidden sm:inline">{t('dashboard.header.newRequest')}</span>
               </button>
             </div>
           </div>
@@ -238,9 +249,30 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
         <section className="p-6 md:p-12 max-w-7xl w-full mx-auto flex-grow space-y-10">
           
           <div className="space-y-1">
-            <h1 className="font-bold text-3xl tracking-tight text-slate-950">Hello, {firstName}</h1>
-            <p className="text-slate-500 text-sm">Here's what's happening with your city services today.</p>
+            <h1 className="font-bold text-3xl tracking-tight text-slate-950">{t('dashboard.greeting.title', { name: firstName })}</h1>
+            <p className="text-slate-500 text-sm">{t('dashboard.greeting.subtitle')}</p>
           </div>
+
+          {/* SOS banner: the dashboard's prominent emergency entry point */}
+          <section
+            aria-label={t('dashboard.emergency.aria')}
+            className="bg-red-50 border border-red-200 rounded-3xl p-5 md:p-6 flex flex-col sm:flex-row items-center gap-5 sm:gap-6"
+          >
+            <SosButton onClick={() => onNavigate('sos')} />
+            <div className="flex-1 text-center sm:text-left">
+              <h2 className="font-bold text-lg text-red-950">{t('dashboard.emergency.title')}</h2>
+              <p className="text-sm text-red-900/80 mt-1">
+                {t('dashboard.emergency.body')}
+              </p>
+            </div>
+            <a
+              href="tel:112"
+              className="shrink-0 inline-flex items-center gap-2 bg-white border border-red-300 text-red-700 hover:bg-red-100 font-extrabold text-sm px-5 py-3 rounded-xl transition-colors"
+              aria-label={t('dashboard.emergency.callAria')}
+            >
+              {t('dashboard.emergency.call')}
+            </a>
+          </section>
 
           {/* Bento Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -249,13 +281,13 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
             <div className="lg:col-span-7 bg-white border border-[#c6c6cd]/40 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="font-bold text-lg text-slate-950">At a Glance</h2>
+                  <h2 className="font-bold text-lg text-slate-950">{t('dashboard.requests.title')}</h2>
                   {myIssues.length > REQUEST_PREVIEW_COUNT && (
                     <button 
                       onClick={() => setShowAllRequests((v) => !v)}
                       className="text-teal-600 font-semibold text-xs hover:underline cursor-pointer"
                     >
-                      {showAllRequests ? 'Show Less' : 'View All Requests'}
+                      {showAllRequests ? t('dashboard.requests.showLess') : t('dashboard.requests.viewAll')}
                     </button>
                   )}
                 </div>
@@ -264,7 +296,7 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
                   {issuesLoading && (
                     <div className="flex items-center justify-center gap-2 py-8 text-slate-400">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-xs">Loading your requests...</span>
+                      <span className="text-xs">{t('dashboard.requests.loading')}</span>
                     </div>
                   )}
                   {!issuesLoading && issuesError && (
@@ -272,11 +304,11 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
                   )}
                   {!issuesLoading && !issuesError && myIssues.length === 0 && (
                     <p className="text-xs text-slate-400 py-8 text-center">
-                      You haven't reported any issues yet. Click "New Request" to file one.
+                      {t('dashboard.requests.empty')}
                     </p>
                   )}
                   {!issuesLoading && visibleRequests.map((issue) => {
-                    const statusMeta = getStatusMeta(issue.status);
+                    const statusMeta = getStatusMeta(issue.status, t);
                     return (
                       <div 
                         key={issue._id} 
@@ -296,9 +328,9 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
                             {issue.type === 'pothole' ? '🕳' : issue.type === 'lighting' ? '💡' : issue.type === 'sanitation' ? '🗑' : '⚙'}
                           </div>
                           <div>
-                            <h4 className="font-semibold text-slate-900 text-sm">{getIssueTitle(issue)}</h4>
+                            <h4 className="font-semibold text-slate-900 text-sm">{getIssueTitle(issue, t)}</h4>
                             <p className="text-xs text-slate-400">
-                              {issue.location?.address ? `${issue.location.address} • ` : ''}Submitted {timeAgo(issue.createdAt)}
+                              {issue.location?.address ? `${issue.location.address} • ` : ''}{t('dashboard.requests.submitted', { time: timeAgo(issue.createdAt, { t, locale }) })}
                             </p>
                           </div>
                         </div>
@@ -322,26 +354,26 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
               <div>
                 <div className="flex items-center gap-2 mb-6 relative z-10">
                   <Sparkles className="w-5 h-5 text-teal-600" />
-                  <h2 className="font-bold text-lg text-teal-950">AI Recommendations</h2>
+                  <h2 className="font-bold text-lg text-teal-950">{t('dashboard.recs.title')}</h2>
                 </div>
 
                 {profileIncomplete ? (
                   <div className="bg-white p-4 rounded-2xl border border-teal-100/45 shadow-sm relative z-10">
                     <p className="text-xs text-slate-500 leading-relaxed mb-3">
-                      Add your age, gender, and income in Settings so CivicPulse AI can match you against real government welfare schemes.
+                      {t('dashboard.recs.profileIncomplete')}
                     </p>
                     <button 
                       onClick={() => onNavigate('settings')}
                       className="text-teal-600 font-bold text-xs flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
                     >
                       <UserCog className="w-3.5 h-3.5" />
-                      <span>Complete your profile</span>
+                      <span>{t('dashboard.recs.completeProfile')}</span>
                     </button>
                   </div>
                 ) : recsLoading ? (
                   <div className="bg-white p-6 rounded-2xl border border-teal-100/45 shadow-sm flex items-center justify-center gap-2 relative z-10">
                     <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
-                    <span className="text-xs text-slate-500">Matching schemes to your profile...</span>
+                    <span className="text-xs text-slate-500">{t('dashboard.recs.loading')}</span>
                   </div>
                 ) : recsError ? (
                   <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm relative z-10">
@@ -349,14 +381,14 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
                   </div>
                 ) : recommendations.length === 0 ? (
                   <div className="bg-white p-4 rounded-2xl border border-teal-100/45 shadow-sm relative z-10">
-                    <p className="text-xs text-slate-500">No confident matches found yet — check back after completing more of your profile.</p>
+                    <p className="text-xs text-slate-500">{t('dashboard.recs.empty')}</p>
                   </div>
                 ) : (
                   <div className="space-y-4 relative z-10">
                     {recommendations.slice(0, 3).map((rec, i) => (
                       <div key={i} className="bg-white p-4 rounded-2xl border border-teal-100/45 shadow-sm">
                         <span className="px-2 py-0.5 bg-teal-100 text-teal-800 text-[9px] font-bold uppercase rounded-md tracking-wider mb-2.5 inline-block">
-                          Scheme Match
+                          {t('dashboard.recs.badge')}
                         </span>
                         <h4 className="font-bold text-sm text-slate-950 mb-1">{rec.name}</h4>
                         <p className="text-xs text-slate-500 leading-relaxed mb-3">
@@ -368,7 +400,7 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
                           rel="noopener noreferrer"
                           className="text-teal-600 font-bold text-xs flex items-center gap-1 hover:gap-2 transition-all cursor-pointer w-fit"
                         >
-                          <span>Apply Now</span> 
+                          <span>{t('dashboard.recs.apply')}</span> 
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
                       </div>
@@ -388,18 +420,18 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
             <div>
               <span className="font-extrabold text-lg text-black mb-1 block">Pragati AI</span>
               <p className="text-xs text-slate-500 max-w-sm">
-                Empowering citizens through transparent, intelligent, and accessible government services.
+                {t('dashboard.footer.tagline')}
               </p>
             </div>
             <div className="flex flex-wrap gap-x-8 gap-y-2 text-xs text-slate-500 font-semibold">
-              <a href="#" className="hover:underline">Privacy Policy</a>
-              <a href="#" className="hover:underline">Terms of Service</a>
-              <a href="#" className="hover:underline">Accessibility Standard</a>
-              <a href="#" className="hover:underline">Contact Support</a>
+              <a href="#" className="hover:underline">{t('dashboard.footer.privacy')}</a>
+              <a href="#" className="hover:underline">{t('dashboard.footer.terms')}</a>
+              <a href="#" className="hover:underline">{t('dashboard.footer.accessibility')}</a>
+              <a href="#" className="hover:underline">{t('dashboard.footer.support')}</a>
             </div>
           </div>
           <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-[#c6c6cd]/40 text-left">
-            <p className="text-[11px] text-slate-400">© 2026 Digital Government Services. All rights reserved. Powered by CivicPulse AI.</p>
+            <p className="text-[11px] text-slate-400">{t('dashboard.footer.copyright')}</p>
           </div>
         </footer>
 
@@ -417,8 +449,8 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
             >
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Request Details</span>
-                  <h3 className="font-bold text-lg text-slate-900 mt-1">{getIssueTitle(selectedRequest)}</h3>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">{t('dashboard.requestModal.title')}</span>
+                  <h3 className="font-bold text-lg text-slate-900 mt-1">{getIssueTitle(selectedRequest, t)}</h3>
                 </div>
                 <button 
                   onClick={() => setSelectedRequest(null)}
@@ -432,27 +464,27 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
                 {selectedRequest.photo?.url && (
                   <img
                     src={selectedRequest.photo.url}
-                    alt={getIssueTitle(selectedRequest)}
+                    alt={getIssueTitle(selectedRequest, t)}
                     className="w-full h-32 object-cover rounded-2xl border border-slate-100"
                   />
                 )}
 
                 <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-2xl">
                   <div>
-                    <span className="text-slate-400 block font-semibold">Submitted</span>
-                    <span className="font-bold text-slate-800">{timeAgo(selectedRequest.createdAt)}</span>
+                    <span className="text-slate-400 block font-semibold">{t('dashboard.requestModal.submitted')}</span>
+                    <span className="font-bold text-slate-800">{timeAgo(selectedRequest.createdAt, { t, locale })}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block font-semibold">Department</span>
+                    <span className="text-slate-400 block font-semibold">{t('dashboard.requestModal.department')}</span>
                     <span className="font-bold text-slate-800">{selectedRequest.department}</span>
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-400 block font-semibold">Active Status</span>
+                  <span className="text-xs text-slate-400 block font-semibold">{t('dashboard.requestModal.status')}</span>
                   <div className="flex items-center gap-2 mt-1.5">
                     {(() => {
-                      const statusMeta = getStatusMeta(selectedRequest.status);
+                      const statusMeta = getStatusMeta(selectedRequest.status, t);
                       return (
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${statusMeta.className}`}>
                           {selectedRequest.status === 'resolved' ? <CheckCircle className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
@@ -464,7 +496,7 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-400 block font-semibold">Description</span>
+                  <span className="text-xs text-slate-400 block font-semibold">{t('dashboard.requestModal.description')}</span>
                   <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
                     {selectedRequest.description}
                     {selectedRequest.location?.address ? ` (${selectedRequest.location.address})` : ''}
@@ -509,13 +541,13 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
 
               <div className="grid grid-cols-2 gap-3 text-xs border-t border-slate-100 pt-4">
                 <div>
-                  <span className="text-slate-400 block font-semibold">Location</span>
+                  <span className="text-slate-400 block font-semibold">{t('dashboard.event.location')}</span>
                   <span className="font-bold text-slate-800 block mt-0.5">{selectedEvent.location}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-semibold">Access</span>
+                  <span className="text-slate-400 block font-semibold">{t('dashboard.event.access')}</span>
                   <span className="font-bold text-slate-800 block mt-0.5">
-                    {selectedEvent.isVirtual ? 'Join Virtual Zoom Link' : 'Open Seat Admission'}
+                    {selectedEvent.isVirtual ? t('dashboard.event.access.virtual') : t('dashboard.event.access.open')}
                   </span>
                 </div>
               </div>
@@ -523,18 +555,18 @@ export default function DashboardPage({ onNavigate, currentUser, onLogout }) {
               <div className="pt-2 flex gap-3">
                 <button 
                   onClick={() => {
-                    alert(`Added to calendar! A calendar invitation has been sent to ${firstName}'s verified email.`);
+                    alert(t('dashboard.event.addedAlert', { name: firstName }));
                     setSelectedEvent(null);
                   }}
                   className="flex-grow py-3 bg-black hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-md text-center transition-all cursor-pointer"
                 >
-                  Add to Calendar
+                  {t('dashboard.event.addToCalendar')}
                 </button>
                 <button 
                   onClick={() => setSelectedEvent(null)}
                   className="py-3 px-5 border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs rounded-xl text-center transition-all"
                 >
-                  Close
+                  {t('dashboard.event.close')}
                 </button>
               </div>
             </motion.div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 // Kolkata fallback — used if the browser denies/lacks geolocation so the
 // map still centers somewhere sensible instead of on (0,0).
@@ -10,6 +11,7 @@ const DEFAULT_LOCATION = { lat: 22.5726, lng: 88.3639 };
  * 'idle' | 'locating' | 'success' | 'denied' | 'unsupported' | 'error'.
  */
 export default function useGeolocation() {
+  const { t } = useLanguage();
   const [location, setLocation] = useState(DEFAULT_LOCATION);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState(null);
@@ -18,7 +20,7 @@ export default function useGeolocation() {
   const locate = useCallback(() => {
     if (!('geolocation' in navigator)) {
       setStatus('unsupported');
-      setError('Your browser does not support geolocation.');
+      setError(t('portal.geo.unsupported'));
       setLocation(DEFAULT_LOCATION);
       setIsDefault(true);
       return;
@@ -41,19 +43,21 @@ export default function useGeolocation() {
         setIsDefault(true);
         if (err.code === err.PERMISSION_DENIED) {
           setStatus('denied');
-          setError('Location access was denied. Showing Kolkata by default.');
+          setError(t('portal.geo.denied'));
         } else {
           setStatus('error');
-          setError('Could not determine your location. Showing Kolkata by default.');
+          setError(t('portal.geo.error'));
         }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
-  }, []);
+  }, [t]);
 
+  // Location is requested once on mount; changing language must not re-prompt.
   useEffect(() => {
     locate();
-  }, [locate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return { location, status, error, isDefault, refresh: locate, defaultLocation: DEFAULT_LOCATION };
 }

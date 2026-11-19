@@ -78,6 +78,14 @@ Base URL: `/api/v1`
 | GET | `/schemes` | — | Full reference list of seeded schemes |
 | POST | `/schemes/match` | ✅ | Optional overrides: `age, gender, annualIncome, category, state, occupation` (defaults to your saved profile) → AI-ranked matches with eligibility reasoning + how-to-apply + official link |
 
+### SOS emergency lookup (nearby police / ambulance / fire / hospitals / pharmacies / blood banks)
+| Method | Route | Auth | Query |
+|---|---|---|---|
+| GET | `/sos/nearby` | — | `lat`, `lng` (required); `radiusKm` (0.5–25, default 5); `categories` (comma list of `police,ambulance,fire,pharmacy,hospital,blood_bank`) → services sorted by distance with address, phone numbers, 24×7 flag |
+| GET | `/sos/geocode` | — | `q` = 6-digit PIN code or area name → candidate coordinates (manual-location fallback when GPS is unavailable) |
+
+Data comes from OpenStreetMap (Overpass + Nominatim, no API key). These routes are intentionally **public** (an expired token must never block an emergency lookup) and are protected by `sosLimiter` instead (`SOS_RATE_LIMIT_MAX`, default 120 req/15 min). Results are cached in memory (places 5 min, geocodes 24 h). The feature only *lists* services; it never dispatches anything — the UI always surfaces **112**. Optional env: `SOS_CONTACT_EMAIL` (sent in the User-Agent, per OSM usage policy), `SOS_COUNTRY_CODES` (default `in`), `OVERPASS_URLS`, `NOMINATIM_URL`. Run the tests with `npm test`.
+
 ## Security notes
 
 - All AI-facing and auth routes are rate-limited separately from the general API (`strictLimiter`, 20 req/15min) to control both abuse and Gemini API cost.

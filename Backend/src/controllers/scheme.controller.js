@@ -17,7 +17,7 @@ export const getMatchedSchemes = asyncHandler(async (req, res) => {
     occupation: req.body.occupation ?? user.profile?.occupation,
   };
 
-  const matches = await matchSchemes({ profile, seedSchemes });
+  const matches = await matchSchemes({ profile, seedSchemes, language: req.language });
 
   res.status(200).json(new ApiResponse(200, { profile, matches }, 'Matching schemes found'));
 });

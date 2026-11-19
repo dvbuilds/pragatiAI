@@ -5,25 +5,29 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 import Sidebar from '../components/Sidebar';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useLanguage } from '../i18n/LanguageContext';
 
+// Values are what the API stores; labelKey is only for display.
 const GENDER_OPTIONS = [
-  { value: '', label: 'Prefer not to say' },
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'other', label: 'Other' },
+  { value: '', labelKey: 'settings.gender.none' },
+  { value: 'male', labelKey: 'settings.gender.male' },
+  { value: 'female', labelKey: 'settings.gender.female' },
+  { value: 'other', labelKey: 'settings.gender.other' },
 ];
 
 const CATEGORY_OPTIONS = [
-  { value: '', label: 'Select category' },
-  { value: 'general', label: 'General' },
-  { value: 'obc', label: 'OBC' },
-  { value: 'sc', label: 'SC' },
-  { value: 'st', label: 'ST' },
-  { value: 'ews', label: 'EWS' },
-  { value: 'other', label: 'Other' },
+  { value: '', labelKey: 'settings.category.none' },
+  { value: 'general', labelKey: 'settings.category.general' },
+  { value: 'obc', labelKey: 'settings.category.obc' },
+  { value: 'sc', labelKey: 'settings.category.sc' },
+  { value: 'st', labelKey: 'settings.category.st' },
+  { value: 'ews', labelKey: 'settings.category.ews' },
+  { value: 'other', labelKey: 'settings.category.other' },
 ];
 
 export default function SettingsPage({ onNavigate, onLogout, currentUser, onProfileUpdated }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     fullName: '',
     phone: '',
@@ -78,7 +82,7 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
       setSaveState('success');
     } catch (err) {
       setSaveState('error');
-      setErrorMessage(err?.response?.data?.message || 'Could not save your changes. Please try again.');
+      setErrorMessage(err?.response?.data?.message || t('settings.save.error'));
     } finally {
       setIsSaving(false);
       setTimeout(() => setSaveState(null), 4000);
@@ -104,7 +108,7 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
               className="flex items-center gap-2 text-sm font-semibold text-[#45464d] hover:text-[#131b2e] transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Dashboard
+              {t('settings.back')}
             </button>
             <span className="lg:hidden font-extrabold text-lg text-black">CivicPulse AI</span>
           </div>
@@ -112,22 +116,30 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
 
         <main className="max-w-3xl mx-auto px-6 py-10 w-full">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-[#131b2e] tracking-tight mb-1">Account Settings</h1>
+            <h1 className="text-2xl font-bold text-[#131b2e] tracking-tight mb-1">{t('settings.title')}</h1>
             <p className="text-sm text-[#45464d]">
-              Keep your profile current — age, gender, and income are what CivicPulse AI uses to match you with government schemes you're eligible for.
+              {t('settings.intro')}
             </p>
           </div>
+
+          <section className="bg-white border border-[#c6c6cd]/40 rounded-2xl shadow-sm p-6 md:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-[#131b2e]">{t('settings.language.title')}</h2>
+              <p className="text-xs text-[#45464d] mt-1 max-w-md">{t('settings.language.description')}</p>
+            </div>
+            <LanguageSwitcher variant="light" className="shrink-0" />
+          </section>
 
           <form onSubmit={handleSubmit} className="bg-white border border-[#c6c6cd]/40 rounded-2xl shadow-sm p-6 md:p-8 space-y-8">
             {/* Basic info */}
           <section className="space-y-4">
             <div className="flex items-center gap-2 text-[#131b2e]">
               <User className="w-4 h-4" />
-              <h2 className="text-sm font-bold uppercase tracking-wider">Basic Info</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider">{t('settings.basic.title')}</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">Full Name</label>
+                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">{t('settings.basic.fullName')}</label>
                 <input
                   type="text"
                   value={form.fullName}
@@ -136,17 +148,17 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">Phone</label>
+                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">{t('settings.basic.phone')}</label>
                 <input
                   type="tel"
                   value={form.phone}
                   onChange={handleChange('phone')}
-                  placeholder="Optional"
+                  placeholder={t('settings.basic.phonePlaceholder')}
                   className="w-full h-11 px-3 rounded-lg border border-[#c6c6cd] bg-[#f2f4f6] text-sm outline-none focus:border-[#0c9488] focus:ring-2 focus:ring-[#0c9488]/20 transition-all"
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">Email</label>
+                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">{t('settings.basic.email')}</label>
                 <input
                   type="email"
                   value={currentUser?.email || ''}
@@ -161,13 +173,13 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
           <section className="space-y-4 pt-2 border-t border-[#c6c6cd]/30">
             <div className="flex items-center gap-2 text-[#131b2e]">
               <ShieldCheck className="w-4 h-4" />
-              <h2 className="text-sm font-bold uppercase tracking-wider">Eligibility Profile</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider">{t('settings.eligibility.title')}</h2>
             </div>
-            <p className="text-xs text-[#45464d] -mt-2">Used only to match you with relevant government schemes. Never shared publicly.</p>
+            <p className="text-xs text-[#45464d] -mt-2">{t('settings.eligibility.note')}</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">Age</label>
+                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">{t('settings.eligibility.age')}</label>
                 <input
                   type="number"
                   min="0"
@@ -178,53 +190,53 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">Gender</label>
+                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">{t('settings.eligibility.gender')}</label>
                 <select
                   value={form.gender}
                   onChange={handleChange('gender')}
                   className="w-full h-11 px-3 rounded-lg border border-[#c6c6cd] bg-[#f2f4f6] text-sm outline-none focus:border-[#0c9488] focus:ring-2 focus:ring-[#0c9488]/20 transition-all"
                 >
-                  {GENDER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  {GENDER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(o.labelKey)}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">Annual Household Income (₹)</label>
+                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">{t('settings.eligibility.income')}</label>
                 <input
                   type="number"
                   min="0"
                   value={form.annualIncome}
                   onChange={handleChange('annualIncome')}
-                  placeholder="e.g. 250000"
+                  placeholder={t('settings.eligibility.incomePlaceholder')}
                   className="w-full h-11 px-3 rounded-lg border border-[#c6c6cd] bg-[#f2f4f6] text-sm outline-none focus:border-[#0c9488] focus:ring-2 focus:ring-[#0c9488]/20 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">State</label>
+                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">{t('settings.eligibility.state')}</label>
                 <input
                   type="text"
                   value={form.state}
                   onChange={handleChange('state')}
-                  placeholder="e.g. West Bengal"
+                  placeholder={t('settings.eligibility.statePlaceholder')}
                   className="w-full h-11 px-3 rounded-lg border border-[#c6c6cd] bg-[#f2f4f6] text-sm outline-none focus:border-[#0c9488] focus:ring-2 focus:ring-[#0c9488]/20 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">Category</label>
+                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">{t('settings.eligibility.category')}</label>
                 <select
                   value={form.category}
                   onChange={handleChange('category')}
                   className="w-full h-11 px-3 rounded-lg border border-[#c6c6cd] bg-[#f2f4f6] text-sm outline-none focus:border-[#0c9488] focus:ring-2 focus:ring-[#0c9488]/20 transition-all"
                 >
-                  {CATEGORY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  {CATEGORY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(o.labelKey)}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">Occupation</label>
+                <label className="block text-xs font-semibold text-[#45464d] uppercase tracking-wider mb-1.5">{t('settings.eligibility.occupation')}</label>
                 <input
                   type="text"
                   value={form.occupation}
                   onChange={handleChange('occupation')}
-                  placeholder="e.g. Student, Farmer, Self-employed"
+                  placeholder={t('settings.eligibility.occupationPlaceholder')}
                   className="w-full h-11 px-3 rounded-lg border border-[#c6c6cd] bg-[#f2f4f6] text-sm outline-none focus:border-[#0c9488] focus:ring-2 focus:ring-[#0c9488]/20 transition-all"
                 />
               </div>
@@ -234,7 +246,7 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
           {saveState === 'success' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 text-emerald-700 text-xs font-semibold bg-emerald-50 border border-emerald-100 rounded-lg p-3">
               <CheckCircle2 className="w-4 h-4" />
-              Profile updated successfully.
+              {t('settings.save.success')}
             </motion.div>
           )}
           {saveState === 'error' && (
@@ -251,7 +263,7 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
               className="flex items-center gap-2 text-sm font-semibold text-rose-600 hover:text-rose-700 transition-colors cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
-              Log Out
+              {t('settings.logout')}
             </button>
 
             <button
@@ -262,12 +274,12 @@ export default function SettingsPage({ onNavigate, onLogout, currentUser, onProf
               {isSaving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
+                  {t('settings.saving')}
                 </>
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  Save Changes
+                  {t('settings.saveChanges')}
                 </>
               )}
             </button>

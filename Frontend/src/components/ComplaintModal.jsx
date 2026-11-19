@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { X, Sparkles, Send, Loader2, Mail, AlertCircle } from "lucide-react";
 import api from "../lib/api";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const CATEGORY_OPTIONS = [
-  { value: "waterlogging", label: "Waterlogging / Drainage Failure" },
-  { value: "inefficient_service", label: "Inefficient Government Service" },
-  { value: "crime_rate", label: "Excessive Crime Rate" },
+  { value: "waterlogging", labelKey: "complaints.modal.option.waterlogging" },
+  { value: "inefficient_service", labelKey: "complaints.modal.option.inefficient_service" },
+  { value: "crime_rate", labelKey: "complaints.modal.option.crime_rate" },
 ];
 
 /**
@@ -16,6 +17,8 @@ const CATEGORY_OPTIONS = [
  *   <NewComplaintModal open={open} onClose={() => setOpen(false)} onSent={(complaint) => {}} />
  */
 export default function NewComplaintModal({ open, onClose, onSent = () => {}, onDrafted = () => {} }) {
+  const { t, language, languages } = useLanguage();
+  const languageName = languages.find((l) => l.code === language)?.native || language;
   const [issueCategory, setIssueCategory] = useState("waterlogging");
   const [area, setArea] = useState("");
   const [details, setDetails] = useState("");
@@ -29,7 +32,7 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
 
   const handleGenerate = async () => {
     if (!area.trim() || !details.trim()) {
-      setError("Please fill in the area and details before generating.");
+      setError(t("complaints.modal.fillRequired"));
       return;
     }
     setError("");
@@ -39,7 +42,7 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
       setDraft(data.data);
       onDrafted(data.data);
     } catch (err) {
-      setError(err?.response?.data?.message || "Could not generate the complaint email. Please try again.");
+      setError(err?.response?.data?.message || t("complaints.modal.generateError"));
     } finally {
       setIsDrafting(false);
     }
@@ -56,7 +59,7 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
       onSent(data.data);
       handleClose();
     } catch (err) {
-      setError(err?.response?.data?.message || "Could not send the complaint email. Please try again.");
+      setError(err?.response?.data?.message || t("complaints.modal.sendError"));
     } finally {
       setIsSending(false);
     }
@@ -84,12 +87,12 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
           <h3 id="ncm-title" className="text-xl font-black text-black tracking-tight">
-            Register New Complaint
+            {t("complaints.modal.title")}
           </h3>
           <button
             className="p-2 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
             onClick={handleClose}
-            aria-label="Close"
+            aria-label={t("complaints.modal.close")}
           >
             <X className="w-5 h-5 text-slate-600" />
           </button>
@@ -98,7 +101,7 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
         {/* Body */}
         <div className="p-6 space-y-5 overflow-y-auto">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Issue Type</label>
+            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{t("complaints.modal.issueType")}</label>
             <select
               value={issueCategory}
               onChange={(e) => setIssueCategory(e.target.value)}
@@ -106,31 +109,34 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 outline-none transition-all disabled:opacity-60"
             >
               {CATEGORY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>{t(o.labelKey)}</option>
               ))}
             </select>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Area / Locality</label>
+            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{t("complaints.modal.area")}</label>
             <input
               value={area}
               onChange={(e) => setArea(e.target.value)}
               disabled={!!draft}
-              placeholder="e.g. Ward 12, MG Road"
+              placeholder={t("complaints.modal.areaPlaceholder")}
               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-600 outline-none transition-all disabled:opacity-60"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Describe your issue</label>
+            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{t("complaints.modal.details")}</label>
             <textarea
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               disabled={!!draft}
               className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-base focus:ring-2 focus:ring-teal-600 outline-none transition-all min-h-[100px] disabled:opacity-60"
-              placeholder="Please provide details about the civic issue you are facing..."
+              placeholder={t("complaints.modal.detailsPlaceholder")}
             />
+            {language !== "en" && (
+              <p className="text-[11px] text-slate-500">{t("complaints.modal.languageNote", { language: languageName })}</p>
+            )}
           </div>
 
           {error && (
@@ -148,7 +154,7 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border-2 border-teal-700 text-teal-700 font-bold text-sm hover:bg-teal-700/5 transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
               >
                 {isDrafting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                {isDrafting ? "Generating…" : "Generate AI Email"}
+                {isDrafting ? t("complaints.modal.generating") : t("complaints.modal.generate")}
               </button>
             </div>
           )}
@@ -157,11 +163,11 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
             <div className="p-6 rounded-xl bg-teal-700/5 border border-teal-700/10 space-y-4">
               <div className="flex items-center gap-2 text-teal-700">
                 <Mail className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-widest">AI Draft Preview</span>
+                <span className="text-xs font-bold uppercase tracking-widest">{t("complaints.modal.draftPreview")}</span>
               </div>
               <div className="space-y-3">
                 <div className="pb-3 border-b border-teal-700/10">
-                  <p className="text-xs text-slate-600 font-bold uppercase">Subject:</p>
+                  <p className="text-xs text-slate-600 font-bold uppercase">{t("complaints.modal.subject")}</p>
                   <p className="text-base font-semibold text-slate-900">{draft.generatedSubject}</p>
                 </div>
                 <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
@@ -170,7 +176,7 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
               </div>
               <div className="pt-2">
                 <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-1.5">
-                  Send to (optional — defaults to the relevant department)
+                  {t("complaints.modal.sendTo")}
                 </label>
                 <input
                   value={recipientEmail}
@@ -186,7 +192,7 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
         {/* Footer */}
         <div className="px-6 py-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-4 shrink-0">
           <button onClick={handleClose} className="px-6 py-3 text-slate-600 font-bold text-sm hover:text-slate-900 cursor-pointer">
-            Cancel
+            {t("complaints.modal.cancel")}
           </button>
           {draft && (
             <button
@@ -195,7 +201,7 @@ export default function NewComplaintModal({ open, onClose, onSent = () => {}, on
               className="bg-teal-700 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
             >
               {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {isSending ? "Sending..." : "Send Complaint"}
+              {isSending ? t("complaints.modal.sending") : t("complaints.modal.send")}
             </button>
           )}
         </div>

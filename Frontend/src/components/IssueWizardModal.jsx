@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, UploadCloud, FileText, CheckCircle, ArrowRight, AlertCircle, MapPin } from 'lucide-react';
 import LocationPicker from './LocationPicker';
 import { createIssue, getIssueTitle } from '../lib/issueService';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const STEP_DESCRIBE = 1;
 const STEP_LOCATE = 2;
@@ -10,6 +11,7 @@ const STEP_REVIEW = 3;
 const STEP_DONE = 4;
 
 export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defaultCenter }) {
+  const { t } = useLanguage();
   const [step, setStep] = useState(STEP_DESCRIBE);
   const [description, setDescription] = useState('');
   const [dragActive, setDragActive] = useState(false);
@@ -53,7 +55,7 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
 
   const goToLocationStep = () => {
     if (!description.trim()) {
-      alert("Please describe what's happening.");
+      alert(t('issue.wizard.error.describe'));
       return;
     }
     setStep(STEP_LOCATE);
@@ -61,7 +63,7 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
 
   const goToReviewStep = () => {
     if (!locationValue) {
-      alert('Please pin the issue location on the map.');
+      alert(t('issue.wizard.error.pinLocation'));
       return;
     }
     setStep(STEP_REVIEW);
@@ -83,7 +85,7 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
       setStep(STEP_DONE);
     } catch (err) {
       setSubmitError(
-        err?.response?.data?.message || 'Could not submit your report. Please try again.'
+        err?.response?.data?.message || t('issue.wizard.error.submitFailed')
       );
     } finally {
       setIsSubmitting(false);
@@ -116,12 +118,13 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Report a New Issue</h2>
-              <p className="text-xs text-slate-500">AI-Assisted Dispatch Center</p>
+              <h2 className="text-xl font-bold text-slate-900">{t('issue.wizard.title')}</h2>
+              <p className="text-xs text-slate-500">{t('issue.wizard.subtitle')}</p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common.close')}
             className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-50 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -153,11 +156,9 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
                     <Sparkles className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-teal-900 text-sm">AI Smart Categorization</h3>
+                    <h3 className="font-semibold text-teal-900 text-sm">{t('issue.wizard.ai.title')}</h3>
                     <p className="text-xs text-teal-700/85 leading-relaxed mt-1">
-                      Describe what's happening and, optionally, attach a photo. Our AI will
-                      automatically determine the category, identify the department, and assign
-                      dispatch priority once you submit.
+                      {t('issue.wizard.ai.body')}
                     </p>
                   </div>
                 </div>
@@ -188,37 +189,37 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
                   ) : (
                     <div className="space-y-1.5">
                       <UploadCloud className="w-6 h-6 mx-auto text-slate-400" />
-                      <p className="text-sm text-slate-600 font-semibold">Drop a photo here, or click to browse</p>
-                      <p className="text-xs text-slate-400">Optional — helps the crew assess the issue faster</p>
+                      <p className="text-sm text-slate-600 font-semibold">{t('issue.wizard.photo.prompt')}</p>
+                      <p className="text-xs text-slate-400">{t('issue.wizard.photo.hint')}</p>
                     </div>
                   )}
                 </div>
 
                 <div>
                   <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-2">
-                    Describe the issue
+                    {t('issue.wizard.description.label')}
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl p-4 text-sm h-32 focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all placeholder-slate-400"
-                    placeholder="Example: Large pothole appearing near the intersection of 4th and Main. It is causing cars to swerve..."
+                    placeholder={t('issue.wizard.description.placeholder')}
                   />
                   <div className="flex gap-2 mt-2 flex-wrap">
-                    <span className="text-xs text-slate-500">Quick suggests:</span>
+                    <span className="text-xs text-slate-500">{t('issue.wizard.suggest.label')}</span>
                     <button
                       type="button"
-                      onClick={() => setDescription('Streetlight is blinking repeatedly, causing it to be pitch black at night.')}
+                      onClick={() => setDescription(t('issue.wizard.suggest.streetlight.text'))}
                       className="text-xs text-teal-700 hover:underline cursor-pointer"
                     >
-                      💡 Blinking Streetlight
+                      {t('issue.wizard.suggest.streetlight.button')}
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDescription('Large deep pothole in the left-bound lane. Multiple cars swerving.')}
+                      onClick={() => setDescription(t('issue.wizard.suggest.pothole.text'))}
                       className="text-xs text-teal-700 hover:underline cursor-pointer"
                     >
-                      🚗 Deep Pothole
+                      {t('issue.wizard.suggest.pothole.button')}
                     </button>
                   </div>
                 </div>
@@ -238,9 +239,9 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
                     <MapPin className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 text-sm">Pin the exact location</h3>
+                    <h3 className="font-semibold text-slate-900 text-sm">{t('issue.wizard.locate.title')}</h3>
                     <p className="text-xs text-slate-500 leading-relaxed mt-1">
-                      Tap the map to drop a pin, drag it to fine-tune, or use your current location.
+                      {t('issue.wizard.locate.body')}
                     </p>
                   </div>
                 </div>
@@ -267,27 +268,27 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
                       <div className="absolute inset-0 border-4 border-teal-100 rounded-full"></div>
                       <div className="absolute inset-0 border-4 border-teal-600 rounded-full border-t-transparent animate-spin"></div>
                     </div>
-                    <h3 className="font-bold text-slate-800 text-lg">Dispatching to CivicPulse AI...</h3>
+                    <h3 className="font-bold text-slate-800 text-lg">{t('issue.wizard.submitting.title')}</h3>
                     <p className="text-sm text-slate-500 max-w-sm mx-auto">
-                      Analyzing your description and matching it with the right municipal department.
+                      {t('issue.wizard.submitting.body')}
                     </p>
                   </div>
                 ) : (
                   <div className="text-left space-y-6">
                     <div className="border border-slate-100 rounded-2xl p-6 bg-slate-50/50 space-y-4">
                       <div>
-                        <span className="text-xs text-slate-400 block uppercase tracking-wider font-semibold">Citizen Description</span>
+                        <span className="text-xs text-slate-400 block uppercase tracking-wider font-semibold">{t('issue.wizard.review.description')}</span>
                         <p className="text-sm text-slate-700 mt-1">{description}</p>
                       </div>
                       <div className="border-t border-slate-100 pt-4">
-                        <span className="text-xs text-slate-400 block uppercase tracking-wider font-semibold">Pinned Location</span>
+                        <span className="text-xs text-slate-400 block uppercase tracking-wider font-semibold">{t('issue.wizard.review.location')}</span>
                         <p className="text-sm text-slate-700 mt-1">
                           {locationValue?.address || `${locationValue?.lat.toFixed(5)}, ${locationValue?.lng.toFixed(5)}`}
                         </p>
                       </div>
                       {uploadedFile && (
                         <div className="border-t border-slate-100 pt-4">
-                          <span className="text-xs text-slate-400 block uppercase tracking-wider font-semibold">Attached Photo</span>
+                          <span className="text-xs text-slate-400 block uppercase tracking-wider font-semibold">{t('issue.wizard.review.photo')}</span>
                           <p className="text-sm text-slate-700 mt-1">{uploadedFile.name}</p>
                         </div>
                       )}
@@ -301,7 +302,7 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
                     )}
 
                     <div className="text-xs text-slate-400 text-center">
-                      Click "Confirm & Dispatch" to submit — AI classification runs on the server.
+                      {t('issue.wizard.review.note')}
                     </div>
                   </div>
                 )}
@@ -320,23 +321,23 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
                 </div>
 
                 <div className="space-y-2 max-w-sm mx-auto">
-                  <h3 className="font-bold text-slate-900 text-xl">Issue Logged & Dispatched</h3>
+                  <h3 className="font-bold text-slate-900 text-xl">{t('issue.wizard.done.title')}</h3>
                   <p className="text-sm text-slate-500 leading-relaxed">
-                    Thank you! The {createdIssue?.department} has been notified. A crew is scheduled to investigate.
+                    {t('issue.wizard.done.body', { department: createdIssue?.department ?? '' })}
                   </p>
                 </div>
 
                 <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 max-w-sm mx-auto flex items-center justify-between text-left">
                   <div>
-                    <span className="text-xs text-slate-400 block font-semibold">Category</span>
+                    <span className="text-xs text-slate-400 block font-semibold">{t('issue.wizard.done.category')}</span>
                     <span className="text-sm font-mono text-slate-800 font-bold capitalize">
-                      {createdIssue ? getIssueTitle(createdIssue) : ''}
+                      {createdIssue ? getIssueTitle(createdIssue, t) : ''}
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs text-slate-400 block font-semibold">Priority</span>
+                    <span className="text-xs text-slate-400 block font-semibold">{t('issue.wizard.done.priority')}</span>
                     <span className="text-xs bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-full border border-emerald-100">
-                      {createdIssue?.priority}
+                      {createdIssue?.priority ? t(`common.priority.${createdIssue.priority}`) : ''}
                     </span>
                   </div>
                 </div>
@@ -349,7 +350,7 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
                     }}
                     className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-8 rounded-xl text-sm transition-all shadow-md hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    Back to Portal
+                    {t('issue.wizard.done.backToPortal')}
                   </button>
                 </div>
               </motion.div>
@@ -369,7 +370,7 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
               disabled={isSubmitting}
               className="px-6 py-2.5 font-semibold text-slate-500 hover:text-slate-800 text-sm transition-colors disabled:opacity-50"
             >
-              {step === STEP_DESCRIBE ? 'Cancel' : 'Back'}
+              {step === STEP_DESCRIBE ? t('issue.wizard.button.cancel') : t('issue.wizard.button.back')}
             </button>
             <button
               onClick={
@@ -385,7 +386,7 @@ export default function IssueWizardModal({ isOpen, onClose, onIssueCreated, defa
               className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl font-semibold text-sm shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
             >
               <span>
-                {step === STEP_DESCRIBE ? 'Continue to Location' : step === STEP_LOCATE ? 'Review & Submit' : 'Confirm & Dispatch'}
+                {step === STEP_DESCRIBE ? t('issue.wizard.button.toLocation') : step === STEP_LOCATE ? t('issue.wizard.button.toReview') : t('issue.wizard.button.submit')}
               </span>
               <ArrowRight className="w-4 h-4" />
             </button>

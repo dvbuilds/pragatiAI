@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import { toLatLng, getIssueTitle } from '../lib/issueService';
 import { issueDivIcon, userLocationDivIcon } from '../lib/leafletIcons';
+import { useLanguage } from '../i18n/LanguageContext';
 
 // Keeps a ref to the underlying Leaflet map instance so the "Recenter on
 // me" button (rendered outside MapContainer) can call panTo/setZoom on it.
@@ -19,6 +20,7 @@ export default function CivicMap({
   onSelectIssue,
   onRecenter,
 }) {
+  const { t } = useLanguage();
   const mapRef = useRef(null);
   const [initialCenter] = useState([center.lat, center.lng]);
 
@@ -61,7 +63,7 @@ export default function CivicMap({
             icon={userLocationDivIcon()}
             zIndexOffset={999}
           >
-            <Popup>You are here</Popup>
+            <Popup>{t('portal.civicMap.youAreHere')}</Popup>
           </Marker>
         )}
 
@@ -74,7 +76,7 @@ export default function CivicMap({
             eventHandlers={{ click: () => onSelectIssue(issue) }}
           >
             <Popup>
-              <span className="font-semibold">{getIssueTitle(issue)}</span>
+              <span className="font-semibold">{getIssueTitle(issue, t)}</span>
               {issue.location?.address ? <><br />{issue.location.address}</> : null}
             </Popup>
           </Marker>
@@ -86,7 +88,7 @@ export default function CivicMap({
         onClick={recenter}
         className="absolute bottom-4 left-4 z-[400] bg-white shadow-md border border-slate-200 rounded-full px-3 py-2 text-[11px] font-bold text-teal-700 hover:bg-teal-50 transition-all cursor-pointer"
       >
-        Recenter on me
+        {t('portal.civicMap.recenter')}
       </button>
     </div>
   );

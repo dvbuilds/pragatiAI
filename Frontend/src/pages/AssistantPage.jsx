@@ -6,16 +6,23 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 import Sidebar from '../components/Sidebar';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function AssistantPage({ onNavigate, onLogout, currentUser, onAddRequest }) {
+  const { t, locale } = useLanguage();
+  const nowLabel = () => new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+
+  // `textKey` messages are re-translated on render, so the greeting / canned
+  // error follow the language if it changes. Real AI replies are plain `text`.
   const [messages, setMessages] = useState([
     {
       id: 'msg-1',
       sender: 'ai',
-      text: "Hi, I'm CivicPulse AI. Ask me about permits, parking, sanitation schedules, zoning, local taxes, or anything else civic — I'll do my best to help.",
+      textKey: 'assistant.greeting',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
+  const messageText = (m) => (m.textKey ? t(m.textKey) : m.text);
 
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -44,11 +51,11 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
       id: `msg-user-${Date.now()}`,
       sender: 'user',
       text: textToSend,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: nowLabel()
     };
 
     // Snapshot history (sender/text only, what the backend expects) before adding the new message
-    const history = messages.map(m => ({ sender: m.sender, text: m.text }));
+    const history = messages.map(m => ({ sender: m.sender, text: messageText(m) }));
 
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
@@ -60,15 +67,17 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
         id: `msg-ai-${Date.now()}`,
         sender: 'ai',
         text: data.data.reply,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: nowLabel()
       };
       setMessages(prev => [...prev, aiMsg]);
     } catch (err) {
       const errorMsg = {
         id: `msg-ai-error-${Date.now()}`,
         sender: 'ai',
-        text: err?.response?.data?.message || "I couldn't reach the assistant service just now. Please try again in a moment.",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        ...(err?.response?.data?.message
+          ? { text: err.response.data.message }
+          : { textKey: 'assistant.error.unreachable' }),
+        timestamp: nowLabel()
       };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
@@ -86,13 +95,13 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
   const handleFormNext = () => {
     if (formStep === 1) {
       if (!formBusinessName.trim()) {
-        alert("Please enter a business or occupancy name.");
+        alert(t('assistant.alert.businessName'));
         return;
       }
       setFormStep(2);
     } else if (formStep === 2) {
       if (!formRevenue.trim()) {
-        alert("Please specify estimated annual gross receipts.");
+        alert(t('assistant.alert.revenue'));
         return;
       }
       setFormStep(3);
@@ -102,10 +111,10 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
   const handleFormSubmit = () => {
     // Add new request to dashboard
     const title = activeFormType === 'tax-exemption' 
-      ? `Tax Exemption: ${formBusinessName}` 
+      ? t('assistant.form.title.tax', { name: formBusinessName }) 
       : activeFormType === 'parking-permit' 
-      ? 'Residential Parking Pass' 
-      : 'Bulk Sanitation Request';
+      ? t('assistant.form.title.parking') 
+      : t('assistant.form.title.sanitation');
     
     const type = activeFormType === 'tax-exemption' ? 'tax' : activeFormType === 'parking-permit' ? 'parking' : 'sanitation';
     
@@ -115,19 +124,20 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
     const successMsg = {
       id: `msg-success-${Date.now()}`,
       sender: 'ai',
-      text: `✓ Success! Your form "${title}" has been successfully submitted and logged inside your Citizen Dashboard. Representative review is estimated within 2 business days.`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      text: t('assistant.form.success', { title }),
+      timestamp: nowLabel()
     };
     
     setMessages(prev => [...prev, successMsg]);
     setActiveFormType(null);
   };
 
+  // The chip's translated prompt is what gets sent, so the conversation stays in the user's language.
   const suggestedTopics = [
-    { title: "Business License Help", prompt: "I need help registering a new LLC business license in Ward 4." },
-    { title: "Tax Clarification", prompt: "What are the current property tax exemption rates for senior citizens?" },
-    { title: "Zoning Inquiries", prompt: "Do I need a building permit to add a small backyard storage shed?" },
-    { title: "Permit Renewals", prompt: "I need to renew my residential parking permit for license plate CP-882." }
+    { title: t('assistant.topics.business.title'), prompt: t('assistant.topics.business.prompt') },
+    { title: t('assistant.topics.tax.title'), prompt: t('assistant.topics.tax.prompt') },
+    { title: t('assistant.topics.zoning.title'), prompt: t('assistant.topics.zoning.prompt') },
+    { title: t('assistant.topics.permit.title'), prompt: t('assistant.topics.permit.prompt') },
   ];
 
   const handleSidebarNavigate = (key) => {
@@ -169,10 +179,10 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h4 className="font-extrabold text-sm text-slate-900 leading-tight">Civic Guide</h4>
+              <h4 className="font-extrabold text-sm text-slate-900 leading-tight">{t('assistant.side.guide')}</h4>
               <div className="flex items-center gap-1 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Online &amp; Ready</span>
+                <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">{t('assistant.side.online')}</span>
               </div>
             </div>
           </div>
@@ -180,7 +190,7 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
 
         {/* Suggested Topics list */}
         <div className="flex-grow space-y-4 text-left px-2">
-          <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-2">Suggested Topics</h5>
+          <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-2">{t('assistant.side.topics')}</h5>
           <div className="space-y-1.5">
             {suggestedTopics.map((topic, i) => (
               <button
@@ -197,8 +207,8 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
 
         {/* Pro Tip Card */}
         <div className="bg-slate-250 border border-slate-300 rounded-2xl p-4 text-xs text-left leading-relaxed text-slate-500 font-medium">
-          <p className="font-bold text-slate-800 mb-1">💡 Pro Tip:</p>
-          You can upload tax documents directly to clarify exemptions or fast-track permit validation.
+          <p className="font-bold text-slate-800 mb-1">{t('assistant.side.tipTitle')}</p>
+          {t('assistant.side.tipBody')}
         </div>
       </aside>
  
@@ -212,11 +222,11 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
               onClick={() => onNavigate('dashboard')}
               className="lg:hidden text-slate-500 font-bold text-xs"
             >
-              ← Back
+              {t('assistant.header.back')}
             </button>
             <div className="text-left">
-              <h2 className="font-extrabold text-sm text-slate-900 leading-tight">AI Service Assistant</h2>
-              <p className="text-[10px] text-slate-400 font-semibold">Instant legal guidance and document pre-filling</p>
+              <h2 className="font-extrabold text-sm text-slate-900 leading-tight">{t('assistant.header.title')}</h2>
+              <p className="text-[10px] text-slate-400 font-semibold">{t('assistant.header.subtitle')}</p>
             </div>
           </div>
           
@@ -224,7 +234,7 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
             onClick={() => onNavigate('dashboard')}
             className="text-xs font-bold text-teal-600 hover:underline cursor-pointer"
           >
-            Go to Dashboard
+            {t('assistant.header.dashboard')}
           </button>
         </header>
 
@@ -235,9 +245,9 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
           <div className="bg-teal-50/40 border border-teal-100 rounded-2xl p-5 max-w-2xl mx-auto flex gap-4 text-left">
             <ShieldCheck className="w-6 h-6 text-teal-700 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-bold text-teal-900 text-sm">Official Secure Portal</h3>
+              <h3 className="font-bold text-teal-900 text-sm">{t('assistant.secure.title')}</h3>
               <p className="text-xs text-teal-700 leading-relaxed mt-1">
-                Your data is fully encrypted under municipal privacy guidelines. All conversations remain anonymous until you choose to submit formal applications to a department.
+                {t('assistant.secure.body')}
               </p>
             </div>
           </div>
@@ -258,13 +268,13 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
                     {msg.sender === 'ai' && (
                       <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2 mb-2">
                         <Sparkles className="w-4 h-4 text-teal-600" />
-                        <span className="font-extrabold text-[10px] text-teal-800 uppercase tracking-widest">AI Analysis Report</span>
+                        <span className="font-extrabold text-[10px] text-teal-800 uppercase tracking-widest">{t('assistant.message.reportLabel')}</span>
                       </div>
                     )}
 
                     {/* Message Body */}
                     <p className="text-xs leading-relaxed font-medium">
-                      {msg.text}
+                      {messageText(msg)}
                     </p>
 
                     {/* Bullet Points */}
@@ -320,7 +330,7 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
                   <div className="flex items-center gap-2">
                     <Landmark className="w-5 h-5 text-teal-600" />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-teal-800">
-                      Smart Assistant Form Filling (Step {formStep} of 3)
+                      {t('assistant.wizard.heading', { step: formStep })}
                     </span>
                   </div>
 
@@ -333,41 +343,41 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
 
                   {formStep === 1 && (
                     <div className="space-y-3">
-                      <label className="block text-xs font-bold text-slate-700">Business or Occupant Name</label>
+                      <label className="block text-xs font-bold text-slate-700">{t('assistant.wizard.business.label')}</label>
                       <input 
                         type="text" 
                         value={formBusinessName}
                         onChange={(e) => setFormBusinessName(e.target.value)}
                         className="w-full border border-slate-200 rounded-xl p-3 text-xs focus:outline-none focus:ring-1 focus:ring-teal-600" 
-                        placeholder="e.g. Alex's Creative Writing Studio" 
+                        placeholder={t('assistant.wizard.business.placeholder')} 
                       />
-                      <p className="text-[10px] text-slate-400">Specify the legal name of your entity as it appears on official documents.</p>
+                      <p className="text-[10px] text-slate-400">{t('assistant.wizard.business.hint')}</p>
                     </div>
                   )}
 
                   {formStep === 2 && (
                     <div className="space-y-3">
-                      <label className="block text-xs font-bold text-slate-700">Annual Gross Receipts / Estimates</label>
+                      <label className="block text-xs font-bold text-slate-700">{t('assistant.wizard.revenue.label')}</label>
                       <input 
                         type="text" 
                         value={formRevenue}
                         onChange={(e) => setFormRevenue(e.target.value)}
                         className="w-full border border-slate-200 rounded-xl p-3 text-xs focus:outline-none focus:ring-1 focus:ring-teal-600" 
-                        placeholder="e.g. Under $5,000" 
+                        placeholder={t('assistant.wizard.revenue.placeholder')} 
                       />
-                      <p className="text-[10px] text-slate-400">We will verify this against Schedule C filing to authorize exemption waivers.</p>
+                      <p className="text-[10px] text-slate-400">{t('assistant.wizard.revenue.hint')}</p>
                     </div>
                   )}
 
                   {formStep === 3 && (
                     <div className="space-y-3">
-                      <h4 className="font-bold text-slate-900 text-sm">Form Verification Summary</h4>
+                      <h4 className="font-bold text-slate-900 text-sm">{t('assistant.wizard.summary.title')}</h4>
                       <div className="p-4 bg-slate-50 rounded-2xl text-xs space-y-2">
-                        <p><span className="text-slate-400">Business:</span> <strong>{formBusinessName}</strong></p>
-                        <p><span className="text-slate-400">Revenue Estimate:</span> <strong>{formRevenue}</strong></p>
-                        <p><span className="text-slate-400">Ward District:</span> <strong>District 4 (Ward 4)</strong></p>
+                        <p><span className="text-slate-400">{t('assistant.wizard.summary.business')}</span> <strong>{formBusinessName}</strong></p>
+                        <p><span className="text-slate-400">{t('assistant.wizard.summary.revenue')}</span> <strong>{formRevenue}</strong></p>
+                        <p><span className="text-slate-400">{t('assistant.wizard.summary.ward')}</span> <strong>{t('assistant.wizard.summary.wardValue')}</strong></p>
                       </div>
-                      <p className="text-[10px] text-emerald-700 font-semibold">✓ Meets home-based tax exemption thresholds.</p>
+                      <p className="text-[10px] text-emerald-700 font-semibold">{t('assistant.wizard.summary.eligible')}</p>
                     </div>
                   )}
 
@@ -376,13 +386,13 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
                       onClick={() => formStep > 1 ? setFormStep(formStep - 1) : setActiveFormType(null)}
                       className="px-4 py-2 font-bold text-xs text-slate-500 hover:text-slate-800 transition-colors"
                     >
-                      {formStep === 1 ? 'Cancel' : 'Back'}
+                      {formStep === 1 ? t('assistant.wizard.cancel') : t('assistant.wizard.back')}
                     </button>
                     <button 
                       onClick={formStep < 3 ? handleFormNext : handleFormSubmit}
                       className="bg-black hover:bg-slate-900 text-white font-bold text-xs px-6 py-2.5 rounded-xl flex items-center gap-1 transition-all active:scale-98"
                     >
-                      <span>{formStep < 3 ? 'Next' : 'Submit Application'}</span>
+                      <span>{formStep < 3 ? t('assistant.wizard.next') : t('assistant.wizard.submit')}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -413,9 +423,9 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
             >
               <button 
                 type="button" 
-                onClick={() => handleSendMessage("Renew my parking permit")}
+                onClick={() => handleSendMessage(t('assistant.input.attachMessage'))}
                 className="text-slate-400 hover:text-slate-700 p-2 rounded-xl"
-                title="Attach Document"
+                title={t('assistant.input.attach')}
               >
                 <Paperclip className="w-5 h-5" />
               </button>
@@ -425,15 +435,15 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-xs md:text-sm text-slate-800 placeholder-slate-400"
-                placeholder="Ask Civic Guide anything about local laws, permits, or waste collection..." 
+                placeholder={t('assistant.input.placeholder')} 
               />
               
               <div className="flex items-center gap-1">
                 <button 
                   type="button" 
-                  onClick={() => handleSendMessage("Trash collection guidelines")}
+                  onClick={() => handleSendMessage(t('assistant.input.voiceMessage'))}
                   className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hidden sm:block"
-                  title="Voice Input"
+                  title={t('assistant.input.voice')}
                 >
                   <Mic className="w-5 h-5" />
                 </button>
@@ -447,7 +457,7 @@ export default function AssistantPage({ onNavigate, onLogout, currentUser, onAdd
               </div>
             </form>
             <p className="text-[10px] text-slate-400 mt-2 text-center">
-              CivicPulse AI Guide is powered by AI and may be inaccurate. Recommendations do not override statutory filings — verify with official sources.
+              {t('assistant.disclaimer')}
             </p>
           </div>
         </div>

@@ -28,6 +28,7 @@ export const draftComplaint = asyncHandler(async (req, res) => {
     area,
     details,
     citizenName: req.user.fullName,
+    language: req.language,
   });
 
   const complaint = await Complaint.create({

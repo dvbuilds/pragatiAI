@@ -3,25 +3,28 @@ import { Plus, Eye, X, Loader2, AlertCircle, CheckCircle2, Clock, XCircle } from
 import Sidebar from "../components/Sidebar";
 import NewComplaintModal from "../components/ComplaintModal";
 import api from "../lib/api";
+import { useLanguage } from "../i18n/LanguageContext";
 
-const CATEGORY_LABELS = {
-  waterlogging: "Waterlogging / Drainage",
-  inefficient_service: "Inefficient Government Service",
-  crime_rate: "Excessive Crime Rate",
+// Enum values come from the API; the label keys are only for display.
+const CATEGORY_LABEL_KEYS = {
+  waterlogging: "complaints.category.waterlogging",
+  inefficient_service: "complaints.category.inefficient_service",
+  crime_rate: "complaints.category.crime_rate",
 };
 
 const FILTERS = [
-  { key: "all", label: "All Complaints" },
-  { key: "drafted", label: "Drafted" },
-  { key: "sent", label: "Sent" },
-  { key: "failed", label: "Failed" },
+  { key: "all", labelKey: "complaints.filter.all" },
+  { key: "drafted", labelKey: "complaints.filter.drafted" },
+  { key: "sent", labelKey: "complaints.filter.sent" },
+  { key: "failed", labelKey: "complaints.filter.failed" },
 ];
 
 function StatusBadge({ status }) {
+  const { t } = useLanguage();
   const map = {
-    sent: { icon: CheckCircle2, cls: "bg-emerald-100 text-emerald-800", label: "Sent" },
-    drafted: { icon: Clock, cls: "bg-amber-100 text-amber-800", label: "Drafted" },
-    failed: { icon: XCircle, cls: "bg-rose-100 text-rose-800", label: "Failed" },
+    sent: { icon: CheckCircle2, cls: "bg-emerald-100 text-emerald-800", label: t("complaints.status.sent") },
+    drafted: { icon: Clock, cls: "bg-amber-100 text-amber-800", label: t("complaints.status.drafted") },
+    failed: { icon: XCircle, cls: "bg-rose-100 text-rose-800", label: t("complaints.status.failed") },
   };
   const s = map[status] || map.drafted;
   return (
@@ -33,6 +36,7 @@ function StatusBadge({ status }) {
 }
 
 export default function Complaint({ onNavigate, onLogout, currentUser }) {
+  const { t, locale } = useLanguage();
   const [complaints, setComplaints] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -47,7 +51,7 @@ export default function Complaint({ onNavigate, onLogout, currentUser }) {
       const { data } = await api.get("/complaints");
       setComplaints(data.data || []);
     } catch (err) {
-      setError(err?.response?.data?.message || "Could not load your complaints.");
+      setError(err?.response?.data?.message || t("complaints.list.loadError"));
     } finally {
       setIsLoading(false);
     }
@@ -84,10 +88,10 @@ export default function Complaint({ onNavigate, onLogout, currentUser }) {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
             <div>
               <h2 className="text-3xl md:text-4xl font-black text-[#131b2e] tracking-tight">
-                Complaints &amp; Grievances
+                {t("complaints.page.title")}
               </h2>
               <p className="text-slate-500 mt-1 max-w-xl">
-                Draft and send AI-written formal complaints about waterlogging, inefficient service, or crime — straight to the right government inbox.
+                {t("complaints.page.intro")}
               </p>
             </div>
             <button
@@ -95,17 +99,17 @@ export default function Complaint({ onNavigate, onLogout, currentUser }) {
               className="bg-teal-700 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg hover:shadow-xl transition-all active:scale-95 cursor-pointer"
             >
               <Plus className="w-5 h-5" />
-              New Complaint
+              {t("complaints.page.newButton")}
             </button>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
             {[
-              { label: "Total Filed", value: stats.total },
-              { label: "Sent", value: stats.sent },
-              { label: "Drafted", value: stats.drafted },
-              { label: "Failed", value: stats.failed },
+              { label: t("complaints.stats.total"), value: stats.total },
+              { label: t("complaints.stats.sent"), value: stats.sent },
+              { label: t("complaints.stats.drafted"), value: stats.drafted },
+              { label: t("complaints.stats.failed"), value: stats.failed },
             ].map((s) => (
               <div key={s.label} className="bg-white p-6 rounded-xl border border-[#c6c6cd]/40 shadow-sm">
                 <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">{s.label}</span>
@@ -124,7 +128,7 @@ export default function Complaint({ onNavigate, onLogout, currentUser }) {
                   filter === f.key ? "border-b-2 border-teal-700 text-[#131b2e]" : "text-slate-400 hover:text-slate-700"
                 }`}
               >
-                {f.label}
+                {t(f.labelKey)}
               </button>
             ))}
           </div>
@@ -133,7 +137,7 @@ export default function Complaint({ onNavigate, onLogout, currentUser }) {
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-16 text-slate-500">
               <Loader2 className="w-5 h-5 animate-spin" />
-              Loading your complaints...
+              {t("complaints.list.loading")}
             </div>
           ) : error ? (
             <div className="flex items-center gap-2 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-sm">
@@ -144,8 +148,8 @@ export default function Complaint({ onNavigate, onLogout, currentUser }) {
             <div className="text-center py-16 bg-white rounded-xl border border-[#c6c6cd]/40">
               <p className="text-slate-500 text-sm">
                 {complaints.length === 0
-                  ? "You haven't filed any complaints yet."
-                  : "No complaints match this filter."}
+                  ? t("complaints.list.emptyNone")
+                  : t("complaints.list.emptyFiltered")}
               </p>
             </div>
           ) : (
@@ -153,30 +157,31 @@ export default function Complaint({ onNavigate, onLogout, currentUser }) {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-[#c6c6cd]/40">
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Category</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Subject</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Status</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Action</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">{t("complaints.table.category")}</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">{t("complaints.table.subject")}</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">{t("complaints.table.date")}</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">{t("complaints.table.status")}</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">{t("complaints.table.action")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#c6c6cd]/30">
                   {filtered.map((c) => (
                     <React.Fragment key={c._id}>
                       <tr className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-5 text-sm text-slate-600">{CATEGORY_LABELS[c.issueCategory] || c.issueCategory}</td>
+                        <td className="px-6 py-5 text-sm text-slate-600">{CATEGORY_LABEL_KEYS[c.issueCategory] ? t(CATEGORY_LABEL_KEYS[c.issueCategory]) : c.issueCategory}</td>
                         <td className="px-6 py-5">
                           <div className="max-w-xs">
                             <p className="text-sm font-semibold text-[#131b2e] truncate">{c.generatedSubject}</p>
                             <p className="text-xs text-slate-400 mt-0.5">{c.area}</p>
                           </div>
                         </td>
-                        <td className="px-6 py-5 text-slate-500 text-sm">{new Date(c.createdAt).toLocaleDateString()}</td>
+                        <td className="px-6 py-5 text-slate-500 text-sm">{new Date(c.createdAt).toLocaleDateString(locale)}</td>
                         <td className="px-6 py-5"><StatusBadge status={c.status} /></td>
                         <td className="px-6 py-5 text-right">
                           <button
                             onClick={() => setExpandedId(expandedId === c._id ? null : c._id)}
                             className="p-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer text-slate-500"
+                            aria-label={t("complaints.table.toggle")}
                           >
                             {expandedId === c._id ? <X className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>

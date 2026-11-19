@@ -9,9 +9,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function Login({ onNavigate }) {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [identity, setIdentity] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -21,11 +23,11 @@ export default function Login({ onNavigate }) {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (!identity) {
-      setError('Email or Citizen ID is required.');
+      setError(t('auth.login.error.identityRequired'));
       return;
     }
     if (!password) {
-      setError('Password is required.');
+      setError(t('auth.login.error.passwordRequired'));
       return;
     }
     setError('');
@@ -34,7 +36,7 @@ export default function Login({ onNavigate }) {
       await login(identity, password);
       onNavigate('dashboard');
     } catch (err) {
-      setError(err?.response?.data?.message || 'Unable to sign in. Please check your credentials.');
+      setError(err?.response?.data?.message || t('auth.login.error.generic'));
     } finally {
       setIsSubmitting(false);
     }
@@ -68,10 +70,10 @@ export default function Login({ onNavigate }) {
 
             <div className="z-10">
               <h1 className="text-5xl font-bold tracking-tight leading-[56px] mb-6">
-                Empowering Digital Governance
+                {t('auth.login.hero.title')}
               </h1>
               <p className="text-[18px] leading-relaxed text-[#7c839b] font-normal">
-                Securely access your citizen dashboard. CivicPulse AI provides transparent, reliable insights to help you navigate public services with confidence.
+                {t('auth.login.hero.subtitle')}
               </p>
             </div>
 
@@ -80,13 +82,13 @@ export default function Login({ onNavigate }) {
               <div className="flex items-center gap-3">
                 <ShieldCheck className="w-5 h-5 text-[#89f5e7] shrink-0" />
                 <span className="text-sm font-semibold text-[#7c839b] tracking-wide">
-                  End-to-end Encrypted Sessions
+                  {t('auth.login.badge.encryption')}
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5 text-[#89f5e7] shrink-0" />
                 <span className="text-sm font-semibold text-[#7c839b] tracking-wide">
-                  GDPR &amp; ADA Compliant Interface
+                  {t('auth.login.badge.compliance')}
                 </span>
               </div>
             </div>
@@ -95,8 +97,8 @@ export default function Login({ onNavigate }) {
           {/* Right Side: Authentication Controls */}
           <div className="p-8 md:p-12 flex flex-col justify-center bg-white">
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-[#131b2e] tracking-tight mb-2">Sign In</h2>
-              <p className="text-sm text-[#45464d]">Welcome back to your civic portal.</p>
+              <h2 className="text-2xl font-bold text-[#131b2e] tracking-tight mb-2">{t('auth.signIn')}</h2>
+              <p className="text-sm text-[#45464d]">{t('auth.login.subtitle')}</p>
             </div>
 
             {error && (
@@ -109,12 +111,12 @@ export default function Login({ onNavigate }) {
               {/* Identity field */}
               <div>
                 <label className="block text-xs font-semibold tracking-wider text-[#45464d] uppercase mb-2" htmlFor="identity">
-                  Email
+                  {t('auth.login.email.label')}
                 </label>
                 <input 
                   id="identity"
                   type="text"
-                  placeholder="e.g. alex.citizen@gov.us"
+                  placeholder={t('auth.login.email.placeholder')}
                   className="w-full h-12 px-4 rounded-lg border border-[#c6c6cd] focus:border-[#0c9488] focus:ring-2 focus:ring-[#0c9488]/20 transition-all outline-none bg-[#f2f4f6] text-sm font-medium"
                   value={identity}
                   onChange={(e) => setIdentity(e.target.value)}
@@ -126,10 +128,10 @@ export default function Login({ onNavigate }) {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-xs font-semibold tracking-wider text-[#45464d] uppercase" htmlFor="password">
-                    Password
+                    {t('auth.password.label')}
                   </label>
                   <a href="#" className="text-xs font-semibold text-[#0c9488] hover:underline">
-                    Forgot password?
+                    {t('auth.login.forgotPassword')}
                   </a>
                 </div>
 
@@ -163,11 +165,11 @@ export default function Login({ onNavigate }) {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                    Signing In...
+                    {t('auth.login.submitting')}
                   </>
                 ) : (
                   <>
-                    Sign In to Dashboard
+                    {t('auth.login.submit')}
                     <LogIn className="w-4.5 h-4.5" />
                   </>
                 )}
@@ -176,12 +178,12 @@ export default function Login({ onNavigate }) {
 
             {/* Request Access Navigation */}
             <div className="mt-8 text-center">
-              <span className="text-sm text-[#45464d]">New to CivicPulse?</span>
+              <span className="text-sm text-[#45464d]">{t('auth.login.newUser.prompt')}</span>
               <button
                 onClick={() => onNavigate('register')}
                 className="text-sm font-bold text-[#131b2e] hover:underline ml-2 cursor-pointer"
               >
-                Request Access
+                {t('auth.login.newUser.action')}
               </button>
             </div>
           </div>
@@ -192,12 +194,12 @@ export default function Login({ onNavigate }) {
       <footer className="w-full py-8 px-6 md:px-10 border-t border-[#c6c6cd]/30 bg-[#f2f4f6]">
         <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-xs text-[#45464d]">
-            © 2024 Digital Government Services. Powered by CivicPulse AI.
+            {t('auth.footer.copyright', { year: 2024 })}
           </div>
           <div className="flex gap-6">
-            <a className="text-xs text-[#45464d] hover:text-[#131b2e] transition-colors" href="#">Privacy Policy</a>
-            <a className="text-xs text-[#45464d] hover:text-[#131b2e] transition-colors" href="#">Terms of Service</a>
-            <a className="text-xs text-[#45464d] hover:text-[#131b2e] transition-colors" href="#">Accessibility</a>
+            <a className="text-xs text-[#45464d] hover:text-[#131b2e] transition-colors" href="#">{t('auth.footer.privacy')}</a>
+            <a className="text-xs text-[#45464d] hover:text-[#131b2e] transition-colors" href="#">{t('auth.login.footer.terms')}</a>
+            <a className="text-xs text-[#45464d] hover:text-[#131b2e] transition-colors" href="#">{t('auth.footer.accessibility')}</a>
           </div>
         </div>
       </footer>

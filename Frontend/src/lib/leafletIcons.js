@@ -75,3 +75,23 @@ export function pickerDivIcon() {
     iconAnchor: [size / 2, size],
   });
 }
+
+/** Round, colour-coded badge for an emergency service (SOS map). */
+export function sosServiceDivIcon(color, glyph, isActive) {
+  const size = isActive ? 38 : 30;
+  return L.divIcon({
+    html: `
+      <div style="
+        width:${size}px; height:${size}px; border-radius:9999px;
+        background:${color}; color:#fff; border:3px solid #fff;
+        display:flex; align-items:center; justify-content:center;
+        font:700 ${glyph.length > 1 ? 11 : 13}px Inter, ui-sans-serif, sans-serif;
+        box-shadow:0 2px 6px rgba(0,0,0,0.4)${isActive ? `, 0 0 0 4px ${color}55` : ''};
+      ">${glyph}</div>
+    `,
+    className: 'civicpulse-marker',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
+  });
+}

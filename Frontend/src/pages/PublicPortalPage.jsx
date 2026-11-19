@@ -7,12 +7,15 @@ import {
 import IssueWizardModal from '../components/IssueWizardModal';
 import Sidebar from '../components/Sidebar';
 import CivicMap from '../components/CivicMap';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useLanguage } from '../i18n/LanguageContext';
 import useGeolocation from '../hooks/useGeolocation';
 import { fetchIssues, fetchPortalStats, getIssueTitle, timeAgo } from '../lib/issueService';
 
 const SEARCH_RADIUS_KM = 10;
 
 export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) {
+  const { t, locale } = useLanguage();
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [mapSearch, setMapSearch] = useState('');
@@ -40,7 +43,7 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
       setLiveIssues(data);
     } catch (err) {
       setIssuesError(
-        err?.response?.data?.message || 'Could not load nearby reports. Is the backend running?'
+        err?.response?.data?.message || t('portal.errors.loadNearby')
       );
     } finally {
       setIssuesLoading(false);
@@ -68,12 +71,12 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
   // Filter live issues based on the search box + category pills
   const filteredIssues = useMemo(() => {
     return liveIssues.filter((issue) => {
-      const haystack = `${getIssueTitle(issue)} ${issue.description || ''} ${issue.location?.address || ''}`.toLowerCase();
+      const haystack = `${getIssueTitle(issue, t)} ${issue.description || ''} ${issue.location?.address || ''}`.toLowerCase();
       const matchesSearch = mapSearch === '' || haystack.includes(mapSearch.toLowerCase());
       const matchesCategory = activeFilter === 'all' || issue.type === activeFilter;
       return matchesSearch && matchesCategory;
     });
-  }, [liveIssues, mapSearch, activeFilter]);
+  }, [liveIssues, mapSearch, activeFilter, t]);
 
   // A real, data-driven insight computed from the nearby reports actually
   // loaded from the backend — not a static hardcoded quote.
@@ -86,13 +89,13 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
       if (issue.status === 'resolved') resolvedCount += 1;
     });
     const topType = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
-    const topLabel = topType ? getIssueTitle({ type: topType }) : null;
+    const topLabel = topType ? getIssueTitle({ type: topType }, t) : null;
     return {
       total: liveIssues.length,
       resolvedCount,
       topLabel,
     };
-  }, [liveIssues]);
+  }, [liveIssues, t]);
 
   // Keep a sensible default selection once reports load in
   useEffect(() => {
@@ -137,15 +140,19 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
               </span>
             </div>
             <div className="hidden lg:block text-slate-500 text-xs font-medium">
-              Public Portal • <span className="text-black font-bold">Community Watch</span>
+              {t('portal.topbar.breadcrumb.section')} • <span className="text-black font-bold">{t('portal.topbar.breadcrumb.page')}</span>
             </div>
-            <button 
-              onClick={() => setIsWizardOpen(true)}
-              className="bg-black text-white font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-slate-900 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Request</span>
-            </button>
+            <div className="flex items-center gap-3">
+              {/* The sidebar (with its picker) is hidden below lg, so offer it here */}
+              <LanguageSwitcher variant="light" className="lg:hidden" />
+              <button 
+                onClick={() => setIsWizardOpen(true)}
+                className="bg-black text-white font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-slate-900 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{t('portal.topbar.newRequest')}</span>
+              </button>
+            </div>
           </div>
         </header>
 
@@ -153,16 +160,18 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
         <section className="flex-grow p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="font-extrabold text-3xl tracking-tight text-slate-950 mb-1.5">Community Watch</h1>
+              <h1 className="font-extrabold text-3xl tracking-tight text-slate-950 mb-1.5">{t('portal.header.title')}</h1>
               <p className="text-slate-500 text-xs md:text-sm max-w-xl leading-relaxed">
-                Transparent reporting for a better neighborhood. Use our AI-powered portal to report infrastructure issues instantly.
+                {t('portal.header.subtitle')}
               </p>
             </div>
             <div>
               <div className="bg-white border border-[#c6c6cd]/50 px-4 py-2.5 rounded-full flex items-center gap-2 shadow-sm">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#0c9488] animate-pulse"></span>
                 <span className="font-bold text-xs text-[#0c9488]">
-                  {statsLoading ? 'Loading stats...' : `${portalStats.resolvedThisWeek} Issue${portalStats.resolvedThisWeek === 1 ? '' : 's'} Fixed This Week`}
+                  {statsLoading
+                    ? t('portal.stats.loading')
+                    : t(portalStats.resolvedThisWeek === 1 ? 'portal.stats.fixedOne' : 'portal.stats.fixedOther', { count: portalStats.resolvedThisWeek })}
                 </span>
               </div>
             </div>
@@ -183,7 +192,8 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                     value={mapSearch}
                     onChange={(e) => setMapSearch(e.target.value)}
                     className="bg-transparent border-none focus:outline-none focus:ring-0 text-xs text-slate-800 placeholder-slate-400 w-full" 
-                    placeholder="Search neighborhood..." 
+                    placeholder={t('portal.search.placeholder')}
+                    aria-label={t('portal.search.placeholder')} 
                   />
                 </div>
                 
@@ -197,7 +207,7 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                         : 'bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white'
                     }`}
                   >
-                    All Issues
+                    {t('portal.filter.all')}
                   </button>
                   <button 
                     onClick={() => setActiveFilter('pothole')}
@@ -207,7 +217,7 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                         : 'bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white'
                     }`}
                   >
-                    Potholes
+                    {t('portal.filter.pothole')}
                   </button>
                   <button 
                     onClick={() => setActiveFilter('lighting')}
@@ -217,7 +227,7 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                         : 'bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white'
                     }`}
                   >
-                    Lighting
+                    {t('portal.filter.lighting')}
                   </button>
                   <button 
                     onClick={() => setActiveFilter('sanitation')}
@@ -227,7 +237,7 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                         : 'bg-white/80 backdrop-blur-sm text-slate-700 hover:bg-white'
                     }`}
                   >
-                    Sanitation
+                    {t('portal.filter.sanitation')}
                   </button>
                 </div>
 
@@ -235,9 +245,9 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                 {(geoStatus === 'locating' || isDefault || issuesError) && (
                   <div className="bg-white/90 backdrop-blur-md px-3 py-2 rounded-xl shadow-md border border-slate-200 flex items-center gap-2 text-[10px] font-semibold text-slate-600">
                     <MapPin className="w-3.5 h-3.5 text-teal-700 flex-shrink-0" />
-                    {geoStatus === 'locating' && <span>Finding your location...</span>}
+                    {geoStatus === 'locating' && <span>{t('portal.banner.locating')}</span>}
                     {geoStatus !== 'locating' && isDefault && !issuesError && (
-                      <span>{geoError || 'Showing Kolkata (default location).'}</span>
+                      <span>{geoError || t('portal.banner.defaultLocation')}</span>
                     )}
                     {issuesError && <span className="text-rose-600">{issuesError}</span>}
                     {(geoStatus === 'denied' || geoStatus === 'error' || issuesError) && (
@@ -245,7 +255,7 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                         onClick={geoStatus === 'denied' || geoStatus === 'error' ? refreshLocation : loadNearbyIssues}
                         className="ml-auto flex items-center gap-1 text-teal-700 hover:underline flex-shrink-0"
                       >
-                        <RefreshCw className="w-3 h-3" /> Retry
+                        <RefreshCw className="w-3 h-3" /> {t('portal.banner.retry')}
                       </button>
                     )}
                   </div>
@@ -266,13 +276,13 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                 {issuesLoading && (
                   <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-slate-200 flex items-center gap-2 text-[10px] font-bold text-slate-600">
                     <span className="w-3 h-3 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
-                    Loading nearby reports...
+                    {t('portal.map.loadingReports')}
                   </div>
                 )}
 
                 {!issuesLoading && !issuesError && filteredIssues.length === 0 && (
                   <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-slate-200 text-[10px] font-bold text-slate-500">
-                    No reports found within {SEARCH_RADIUS_KM}km
+                    {t('portal.map.noReports', { radius: SEARCH_RADIUS_KM })}
                   </div>
                 )}
               </div>
@@ -290,21 +300,21 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                     <div className="flex items-center gap-2 mb-2">
                       <Info className="w-4 h-4 text-teal-600" />
                       <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wider block">
-                        {selectedIssue.status === 'resolved' ? 'Resolved Issue' : 'Active Issue'}
+                        {selectedIssue.status === 'resolved' ? t('portal.selected.resolved') : t('portal.selected.active')}
                       </span>
                     </div>
                     {selectedIssue.photo?.url && (
                       <img
                         src={selectedIssue.photo.url}
-                        alt={getIssueTitle(selectedIssue)}
+                        alt={getIssueTitle(selectedIssue, t)}
                         className="w-full h-28 object-cover rounded-xl mb-2 border border-slate-100"
                       />
                     )}
-                    <p className="font-bold text-slate-900 text-sm mb-1">{getIssueTitle(selectedIssue)}</p>
+                    <p className="font-bold text-slate-900 text-sm mb-1">{getIssueTitle(selectedIssue, t)}</p>
                     <p className="text-xs text-slate-500 mb-3 leading-relaxed">
                       {selectedIssue.description}
                       {selectedIssue.location?.address ? ` • ${selectedIssue.location.address}` : ''}
-                      {' • Reported '}{timeAgo(selectedIssue.createdAt)}.
+                      {' • '}{t('portal.selected.reported', { time: timeAgo(selectedIssue.createdAt, { t, locale }) })}
                     </p>
                     <div className="flex items-center justify-between text-[10px] font-bold pt-2 border-t border-slate-100">
                       <span className="text-slate-500">{selectedIssue.department}</span>
@@ -313,7 +323,7 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                         : selectedIssue.priority === 'Medium' ? 'bg-amber-50 text-amber-700'
                         : 'bg-emerald-50 text-emerald-700'
                       }`}>
-                        {selectedIssue.priority} Priority
+                        {t('portal.selected.priority', { priority: t(`common.priority.${selectedIssue.priority}`) })}
                       </span>
                     </div>
                   </motion.div>
@@ -329,42 +339,45 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                 <div className="absolute top-0 right-0 w-24 h-24 bg-teal-50 rounded-full blur-2xl pointer-events-none" />
                 <div className="flex items-center gap-2 mb-4 relative z-10">
                   <Sparkles className="w-5 h-5 text-teal-600" />
-                  <h3 className="font-bold text-xs uppercase tracking-wider text-teal-800">Neighborhood Insight</h3>
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-teal-800">{t('portal.insight.title')}</h3>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed mb-4 relative z-10 font-medium">
-                  {issuesLoading && 'Crunching nearby reports...'}
-                  {!issuesLoading && !neighborhoodInsight && `No reports within ${SEARCH_RADIUS_KM}km yet — be the first to file one.`}
+                  {issuesLoading && t('portal.insight.loading')}
+                  {!issuesLoading && !neighborhoodInsight && t('portal.insight.empty', { radius: SEARCH_RADIUS_KM })}
                   {!issuesLoading && neighborhoodInsight && (
                     <>
-                      {neighborhoodInsight.total} report{neighborhoodInsight.total === 1 ? '' : 's'} within {SEARCH_RADIUS_KM}km,{' '}
-                      {neighborhoodInsight.resolvedCount} already resolved.
-                      {neighborhoodInsight.topLabel && ` The most common issue nearby is ${neighborhoodInsight.topLabel.toLowerCase()}.`}
+                      {t(neighborhoodInsight.total === 1 ? 'portal.insight.summaryOne' : 'portal.insight.summaryOther', {
+                        total: neighborhoodInsight.total,
+                        radius: SEARCH_RADIUS_KM,
+                        resolved: neighborhoodInsight.resolvedCount,
+                      })}
+                      {neighborhoodInsight.topLabel && ` ${t('portal.insight.topType', { type: neighborhoodInsight.topLabel.toLowerCase() })}`}
                     </>
                   )}
                 </p>
                 <div className="mt-auto pt-4 border-t border-slate-100 text-[11px] relative z-10">
-                  <span className="text-slate-400 font-semibold">Live from CivicPulse reports</span>
+                  <span className="text-slate-400 font-semibold">{t('portal.insight.source')}</span>
                 </div>
               </div>
 
               {/* Recently Resolved Feed — real resolved issues from the backend */}
               <div className="bg-white border border-[#c6c6cd]/50 rounded-3xl p-6 shadow-sm flex flex-col flex-grow">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-bold text-base text-slate-950">Recently Resolved</h3>
+                  <h3 className="font-bold text-base text-slate-950">{t('portal.resolved.title')}</h3>
                 </div>
 
                 <div className="space-y-6">
                   {statsLoading && (
-                    <p className="text-xs text-slate-400">Loading recent activity...</p>
+                    <p className="text-xs text-slate-400">{t('portal.resolved.loading')}</p>
                   )}
                   {!statsLoading && portalStats.recentlyResolved.length === 0 && (
-                    <p className="text-xs text-slate-400">No resolved reports yet.</p>
+                    <p className="text-xs text-slate-400">{t('portal.resolved.empty')}</p>
                   )}
                   {!statsLoading && portalStats.recentlyResolved.map((item) => (
                     <div key={item._id} className="flex gap-4 items-start text-left">
                       <div className="w-16 h-16 rounded-2xl overflow-hidden bg-teal-50 flex-shrink-0 shadow-sm border border-slate-150 flex items-center justify-center">
                         {item.photo?.url ? (
-                          <img className="w-full h-full object-cover" src={item.photo.url} alt={getIssueTitle(item)} />
+                          <img className="w-full h-full object-cover" src={item.photo.url} alt={getIssueTitle(item, t)} />
                         ) : (
                           <CheckCircle2 className="w-6 h-6 text-teal-600" />
                         )}
@@ -372,11 +385,11 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="text-[9px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full uppercase">
-                            Fixed
+                            {t('portal.resolved.badge')}
                           </span>
-                          <span className="text-[10px] text-slate-400 font-semibold">{timeAgo(item.updatedAt)}</span>
+                          <span className="text-[10px] text-slate-400 font-semibold">{timeAgo(item.updatedAt, { t, locale })}</span>
                         </div>
-                        <h4 className="font-bold text-xs text-slate-900 leading-tight">{getIssueTitle(item)}</h4>
+                        <h4 className="font-bold text-xs text-slate-900 leading-tight">{getIssueTitle(item, t)}</h4>
                         <p className="text-[11px] text-slate-500 leading-normal">
                           {item.location?.address || item.description}
                         </p>
@@ -397,18 +410,18 @@ export default function PublicPortalPage({ onNavigate, onLogout, currentUser }) 
             <div className="max-w-xs space-y-3">
               <span className="font-extrabold text-lg text-black block">CivicPulse AI</span>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Empowering citizens through intelligent digital infrastructure and transparent governance.
+                {t('portal.footer.tagline')}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-xs text-slate-500 font-bold">
-              <a href="#" className="hover:underline">Privacy Policy</a>
-              <a href="#" className="hover:underline">Terms of Service</a>
-              <a href="#" className="hover:underline">Accessibility Standard</a>
-              <a href="#" className="hover:underline">Contact Support</a>
+              <a href="#" className="hover:underline">{t('portal.footer.privacy')}</a>
+              <a href="#" className="hover:underline">{t('portal.footer.terms')}</a>
+              <a href="#" className="hover:underline">{t('portal.footer.accessibility')}</a>
+              <a href="#" className="hover:underline">{t('portal.footer.contact')}</a>
             </div>
           </div>
           <div className="max-w-7xl mx-auto border-t border-[#c6c6cd]/50 mt-8 pt-6 flex flex-col sm:flex-row justify-between gap-4 text-xs text-slate-400">
-            <p>© 2026 Digital Government Services. All rights reserved. Powered by CivicPulse AI.</p>
+            <p>{t('portal.footer.copyright')}</p>
             <div className="flex gap-4">
               <button className="text-slate-400 hover:text-black"><Globe className="w-4 h-4" /></button>
               <button className="text-slate-400 hover:text-black"><Share2 className="w-4 h-4" /></button>

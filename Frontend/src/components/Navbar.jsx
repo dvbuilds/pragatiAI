@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TrendingUp, Menu, X, ChevronRight } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 /**
  * Pragati AI - Professional Civic Navigation Bar
@@ -16,6 +18,7 @@ import { TrendingUp, Menu, X, ChevronRight } from 'lucide-react';
  * real logged-in user instead — "Sign In"/"Sign Up" wouldn't make sense there.
  */
 export default function Navbar({ onNavigate, activeTab = 'landing' }) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -31,9 +34,9 @@ export default function Navbar({ onNavigate, activeTab = 'landing' }) {
   // sections, whenever those exist. Anchor scrolling only works from the
   // Landing page itself; from Login/Register these just navigate to Landing.
   const navLinks = [
-    { name: 'About', anchor: '#top', id: 'nav-link-about' },
-    { name: 'Features', anchor: '#features', id: 'nav-link-features' },
-    { name: 'Contact', anchor: '#resources', id: 'nav-link-contact' },
+    { nameKey: 'navbar.link.about', anchor: '#top', id: 'nav-link-about' },
+    { nameKey: 'navbar.link.features', anchor: '#features', id: 'nav-link-features' },
+    { nameKey: 'navbar.link.contact', anchor: '#resources', id: 'nav-link-contact' },
   ];
 
   const handleAnchorClick = (anchor) => (e) => {
@@ -84,19 +87,20 @@ export default function Navbar({ onNavigate, activeTab = 'landing' }) {
         <div className="hidden md:flex items-center gap-8" id="navbar-desktop-links">
           {navLinks.map((link) => (
             <a
-              key={link.name}
+              key={link.id}
               href={link.anchor}
               id={link.id}
               onClick={handleAnchorClick(link.anchor)}
               className="text-sm font-medium tracking-wide transition-colors duration-200 relative py-1.5 text-slate-300 hover:text-white cursor-pointer"
             >
-              {link.name}
+              {t(link.nameKey)}
             </a>
           ))}
         </div>
 
         {/* Action Buttons (Desktop) */}
         <div className="hidden md:flex items-center gap-4" id="navbar-desktop-actions">
+          <LanguageSwitcher variant="light" />
           <button
             id="nav-btn-signin"
             onClick={goTo('login')}
@@ -104,14 +108,14 @@ export default function Navbar({ onNavigate, activeTab = 'landing' }) {
               activeTab === 'login' ? 'text-white' : 'text-slate-300 hover:text-white'
             }`}
           >
-            Sign In
+            {t('navbar.signIn')}
           </button>
           <button
             id="nav-btn-signup"
             onClick={goTo('register')}
             className="bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm px-6 py-2.5 rounded-lg transition-all duration-300 shadow-lg shadow-teal-900/20 hover:shadow-teal-500/10 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
           >
-            Sign Up
+            {t('navbar.signUp')}
           </button>
         </div>
 
@@ -122,14 +126,14 @@ export default function Navbar({ onNavigate, activeTab = 'landing' }) {
             onClick={goTo('register')}
             className="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition-all duration-300 shadow-lg shadow-teal-900/20 active:scale-95 cursor-pointer"
           >
-            Sign Up
+            {t('navbar.signUp')}
           </button>
           
           <button
             id="nav-btn-mobile-toggle"
             onClick={() => setIsOpen(!isOpen)}
             className="text-white hover:text-teal-400 p-1.5 transition-colors duration-200 focus:outline-none rounded-lg hover:bg-white/5 cursor-pointer"
-            aria-label="Toggle Menu"
+            aria-label={t('navbar.toggleMenu')}
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -151,7 +155,7 @@ export default function Navbar({ onNavigate, activeTab = 'landing' }) {
               <div className="flex flex-col gap-4">
                 {navLinks.map((link, index) => (
                   <motion.div
-                    key={link.name}
+                    key={link.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
@@ -162,7 +166,7 @@ export default function Navbar({ onNavigate, activeTab = 'landing' }) {
                       onClick={handleAnchorClick(link.anchor)}
                       className="flex items-center justify-between text-base font-medium py-2 border-b border-white/5 transition-colors text-slate-200 hover:text-white cursor-pointer"
                     >
-                      {link.name}
+                      {t(link.nameKey)}
                       <ChevronRight className="w-4 h-4 opacity-50" />
                     </a>
                   </motion.div>
@@ -175,12 +179,13 @@ export default function Navbar({ onNavigate, activeTab = 'landing' }) {
                 transition={{ delay: 0.2 }}
                 className="flex flex-col gap-3 pt-4 border-t border-white/10"
               >
+                <LanguageSwitcher variant="light" className="self-start" />
                 <button
                   id="nav-btn-signin-mobile"
                   onClick={goTo('login')}
                   className="w-full text-center py-3 rounded-lg text-slate-200 hover:text-white font-semibold text-sm transition-colors border border-white/10 hover:bg-white/5 cursor-pointer"
                 >
-                  Sign In
+                  {t('navbar.signIn')}
                 </button>
               </motion.div>
             </div>

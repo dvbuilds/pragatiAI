@@ -11,7 +11,7 @@ export const getDocumentGuide = asyncHandler(async (req, res) => {
   if (!['create', 'update'].includes(action)) throw new ApiError(400, 'action must be "create" or "update"');
 
   const officialLink = resolveOfficialLink(documentName);
-  const guide = await generateDocumentGuide({ documentName, action, officialLink });
+  const guide = await generateDocumentGuide({ documentName, action, officialLink, language: req.language });
 
   res.status(200).json(new ApiResponse(200, guide, 'Document guide generated'));
 });

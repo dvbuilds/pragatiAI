@@ -15,7 +15,7 @@ export const chat = asyncHandler(async (req, res) => {
 
   let reply;
   try {
-    reply = await chatWithAssistant(fullHistory);
+    reply = await chatWithAssistant(fullHistory, { language: req.language });
   } catch (err) {
     console.error('Assistant chat failed:', err.message);
     throw new ApiError(502, 'The AI assistant is temporarily unavailable. Please try again in a moment.');

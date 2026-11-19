@@ -5,15 +5,27 @@ import {
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import api from "../lib/api";
+import { useLanguage } from "../i18n/LanguageContext";
 
+// documentName / action are sent to the API as identifiers and must stay English;
+// titleKey is only the label shown on the button.
 const QUICK_GUIDES = [
-  { icon: Fingerprint, title: "Birth Certificate", documentName: "Birth Certificate", action: "create" },
-  { icon: Fingerprint, title: "Update Aadhaar", documentName: "Aadhaar", action: "update" },
-  { icon: ShoppingBasket, title: "Ration Card", documentName: "Ration Card", action: "create" },
-  { icon: Banknote, title: "Income Certificate", documentName: "Income Certificate", action: "create" },
+  { icon: Fingerprint, titleKey: "documents.quick.birth", documentName: "Birth Certificate", action: "create" },
+  { icon: Fingerprint, titleKey: "documents.quick.aadhaar", documentName: "Aadhaar", action: "update" },
+  { icon: ShoppingBasket, titleKey: "documents.quick.ration", documentName: "Ration Card", action: "create" },
+  { icon: Banknote, titleKey: "documents.quick.income", documentName: "Income Certificate", action: "create" },
 ];
 
+// Put a styled node inside a translated sentence without splitting the sentence
+// across keys: translators place {slot} wherever their grammar needs it.
+const SLOT = "\u0001";
+function withSlot(template, node) {
+  const [before, after = ""] = template.split(SLOT);
+  return <>{before}{node}{after}</>;
+}
+
 export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
+  const { t } = useLanguage();
   const [documentName, setDocumentName] = useState("");
   const [action, setAction] = useState("create");
   const [history, setHistory] = useState([]); // { documentName, action, guide?, error? }
@@ -34,7 +46,7 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
       const { data } = await api.post("/documents/guide", { documentName: docName, action: docAction });
       setHistory((prev) => prev.map((h) => (h === entry ? { ...h, guide: data.data } : h)));
     } catch (err) {
-      const message = err?.response?.data?.message || "Could not generate a guide right now. Please try again.";
+      const message = err?.response?.data?.message || t("documents.error");
       setHistory((prev) => prev.map((h) => (h === entry ? { ...h, error: message } : h)));
     } finally {
       setIsLoading(false);
@@ -67,7 +79,7 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
         {/* Top App Bar */}
         <header className="border-b border-[#c6c6cd]/40 bg-white z-20 shrink-0">
           <div className="flex justify-between items-center px-6 h-16 w-full max-w-[1280px] mx-auto">
-            <h2 className="text-xl font-bold text-[#131b2e]">Document AI Assistant</h2>
+            <h2 className="text-xl font-bold text-[#131b2e]">{t("documents.header.title")}</h2>
           </div>
         </header>
 
@@ -82,9 +94,10 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
                 </div>
                 <div className="bg-white border border-[#c6c6cd]/40 rounded-2xl rounded-tl-none p-5 shadow-sm">
                   <p className="text-sm leading-relaxed text-slate-700">
-                    Hi, I'm your <span className="font-semibold text-teal-700">CivicPulse Document Assistant</span>.
-                    Tell me which document you need — creating fresh or updating an existing one — and I'll
-                    walk you through the steps, required paperwork, typical fees, and the official portal link.
+                    {withSlot(
+                      t("documents.intro.body", { assistant: SLOT }),
+                      <span className="font-semibold text-teal-700">{t("documents.intro.assistantName")}</span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -98,7 +111,10 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
                     </div>
                     <div className="bg-slate-100 rounded-2xl rounded-tr-none p-5">
                       <p className="text-sm text-slate-800">
-                        I need to {entry.action === "update" ? "update" : "apply for"} my <strong>{entry.documentName}</strong>. What's the process?
+                        {withSlot(
+                          t(entry.action === "update" ? "documents.request.update" : "documents.request.create", { name: SLOT }),
+                          <strong>{entry.documentName}</strong>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -112,7 +128,7 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
                       {!entry.guide && !entry.error && (
                         <div className="flex items-center gap-2 text-slate-500 text-sm">
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Looking up the process...
+                          {t("documents.loading")}
                         </div>
                       )}
                       {entry.error && (
@@ -124,7 +140,7 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
                       {entry.guide && (
                         <div>
                           <p className="text-xs mb-3 flex items-center gap-1 font-semibold text-teal-700 uppercase tracking-wide">
-                            <CheckCircle2 className="w-4 h-4" /> Step-by-step process
+                            <CheckCircle2 className="w-4 h-4" /> {t("documents.guide.steps")}
                           </p>
                           <ol className="space-y-2 list-decimal list-inside text-sm text-slate-700">
                             {entry.guide.steps?.map((step, idx) => <li key={idx}>{step}</li>)}
@@ -132,7 +148,7 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
 
                           {entry.guide.requiredDocuments?.length > 0 && (
                             <div className="mt-4">
-                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Required Documents</p>
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">{t("documents.guide.required")}</p>
                               <ul className="space-y-1.5">
                                 {entry.guide.requiredDocuments.map((doc, idx) => (
                                   <li key={idx} className="flex items-center gap-2 text-sm text-slate-600">
@@ -145,8 +161,8 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
                           )}
 
                           <div className="flex gap-4 mt-4 text-xs text-slate-500">
-                            {entry.guide.estimatedTime && <span><strong>Time:</strong> {entry.guide.estimatedTime}</span>}
-                            {entry.guide.estimatedFee && <span><strong>Fee:</strong> {entry.guide.estimatedFee}</span>}
+                            {entry.guide.estimatedTime && <span><strong>{t("documents.guide.time")}</strong> {entry.guide.estimatedTime}</span>}
+                            {entry.guide.estimatedFee && <span><strong>{t("documents.guide.fee")}</strong> {entry.guide.estimatedFee}</span>}
                           </div>
 
                           {entry.guide.notes && (
@@ -160,7 +176,7 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors"
                             >
-                              Apply on Official Portal
+                              {t("documents.guide.apply")}
                               <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           )}
@@ -178,7 +194,7 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
                 <input
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
-                  placeholder="e.g. Passport, Driving License, PAN Card..."
+                  placeholder={t("documents.input.placeholder")}
                   className="flex-1 px-4 py-3 bg-slate-50 border border-[#c6c6cd] rounded-xl text-sm outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all"
                   disabled={isLoading}
                 />
@@ -188,8 +204,8 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
                   className="px-3 py-3 bg-slate-50 border border-[#c6c6cd] rounded-xl text-sm outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all"
                   disabled={isLoading}
                 >
-                  <option value="create">Create New</option>
-                  <option value="update">Update Existing</option>
+                  <option value="create">{t("documents.input.create")}</option>
+                  <option value="update">{t("documents.input.update")}</option>
                 </select>
                 <button
                   type="submit"
@@ -200,7 +216,7 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
                 </button>
               </div>
               <p className="text-center text-[10px] mt-3 uppercase tracking-widest font-bold text-slate-400">
-                Guidance is AI-generated — always confirm details on the official portal
+                {t("documents.disclaimer")}
               </p>
             </form>
           </section>
@@ -208,11 +224,11 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
           {/* Right pane: Quick Guides */}
           <aside className="hidden lg:flex w-80 h-full flex-col p-6 gap-6 overflow-y-auto border-l border-[#c6c6cd]/40 bg-white shrink-0">
             <div>
-              <h3 className="text-xs uppercase tracking-widest mb-4 text-slate-500 font-bold">Quick Guides</h3>
+              <h3 className="text-xs uppercase tracking-widest mb-4 text-slate-500 font-bold">{t("documents.quick.title")}</h3>
               <div className="space-y-3">
                 {QUICK_GUIDES.map((g) => (
                   <button
-                    key={g.title}
+                    key={g.titleKey}
                     onClick={() => handleQuickGuide(g)}
                     disabled={isLoading}
                     className="w-full flex items-center gap-3 p-4 rounded-xl border border-[#c6c6cd]/40 bg-slate-50 transition-all text-left group hover:shadow-md hover:border-teal-200 disabled:opacity-50 cursor-pointer"
@@ -221,8 +237,8 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
                       <g.icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-slate-900">{g.title}</p>
-                      <p className="text-xs text-slate-500 capitalize">{g.action === "update" ? "Update existing" : "New application"}</p>
+                      <p className="text-sm font-bold text-slate-900">{t(g.titleKey)}</p>
+                      <p className="text-xs text-slate-500">{g.action === "update" ? t("documents.quick.updateExisting") : t("documents.quick.newApplication")}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-slate-400" />
                   </button>
@@ -233,10 +249,10 @@ export default function DocumentPage({ onNavigate, onLogout, currentUser }) {
             <div className="mt-auto p-5 rounded-2xl bg-slate-900 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="w-4 h-4 text-teal-400" />
-                <h4 className="font-bold text-sm">Tip</h4>
+                <h4 className="font-bold text-sm">{t("documents.tip.title")}</h4>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Name the exact document you need (e.g. "Voter ID" rather than "ID proof") for the most accurate steps.
+                {t("documents.tip.body")}
               </p>
             </div>
           </aside>

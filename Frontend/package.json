@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "echo 'Skipping TS check for JS-only project'"
+    "lint": "echo 'Skipping TS check for JS-only project'",
+    "i18n:check": "node scripts/i18n-check.mjs",
+    "i18n:dump": "node scripts/i18n-build.mjs dump",
+    "i18n:build": "node scripts/i18n-build.mjs build"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

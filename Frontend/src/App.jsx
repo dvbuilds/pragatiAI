@@ -8,11 +8,12 @@ import SettingsPage from './pages/SettingsPage';
 import DocumentPage from './pages/DocumentPage';
 import GovernmentScheme from './pages/GovernmentScheme';
 import Complaint from './pages/Complaint';
+import SosPage from './pages/SosPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { useAuth } from './context/AuthContext';
 
-const PROTECTED_TABS = ['dashboard', 'portal', 'assistant', 'settings', 'documents', 'schemes', 'complaints'];
+const PROTECTED_TABS = ['dashboard', 'portal', 'assistant', 'settings', 'documents', 'schemes', 'complaints', 'sos'];
 const ACTIVE_TAB_KEY = 'cp_active_tab';
 
 // Reads whatever tab the user was last on so a refresh (F5) reopens the
@@ -189,6 +190,14 @@ export default function App() {
 
           {activeTab === 'complaints' && user && (
             <Complaint
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+              currentUser={user}
+            />
+          )}
+
+          {activeTab === 'sos' && user && (
+            <SosPage
               onNavigate={handleNavigate}
               onLogout={handleLogout}
               currentUser={user}

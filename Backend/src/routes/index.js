@@ -5,6 +5,7 @@ import complaintRoutes from './complaint.routes.js';
 import documentRoutes from './document.routes.js';
 import schemeRoutes from './scheme.routes.js';
 import assistantRoutes from './assistant.routes.js';
+import sosRoutes from './sos.routes.js';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/complaints', complaintRoutes);
 router.use('/documents', documentRoutes);
 router.use('/schemes', schemeRoutes);
 router.use('/assistant', assistantRoutes);
+router.use('/sos', sosRoutes);
 
 export default router;
