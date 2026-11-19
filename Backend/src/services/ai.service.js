@@ -5,7 +5,7 @@ const ai = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
   baseURL: 'https://api.groq.com/openai/v1',
 });
-const MODEL = 'llama-3.1-8b-instant';
+const MODEL = 'openai/gpt-oss-20b';
 
 // Strips markdown code fences some models wrap JSON in, then parses.
 //
